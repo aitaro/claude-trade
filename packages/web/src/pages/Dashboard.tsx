@@ -1,5 +1,5 @@
 import { trpc } from "@/lib/trpc";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, formatTimeJST } from "@/lib/format";
 import {
   Card,
   CardContent,
@@ -18,6 +18,8 @@ export function Dashboard() {
     activeOnly: true,
     limit: 10,
   });
+  const markets = trpc.markets.status.useQuery();
+  const schedule = trpc.markets.schedule.useQuery();
 
   const nav = snapshot.data?.account?.netLiquidation;
 
@@ -96,6 +98,94 @@ export function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Market Status */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Markets</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3 md:grid-cols-4">
+            {markets.data?.map((m) => (
+              <div
+                key={m.marketId}
+                className={`rounded-lg border p-3 ${m.isOpen ? "border-green-300 bg-green-50" : "border-border"}`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold">{m.marketId.toUpperCase()}</span>
+                  <Badge variant={m.isOpen ? "default" : "secondary"}>
+                    {m.isOpen ? "OPEN" : "CLOSED"}
+                  </Badge>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">{m.name}</p>
+                <div className="mt-2 text-sm">
+                  <span className="font-mono">{m.openTime}</span>
+                  <span className="text-muted-foreground"> – </span>
+                  <span className="font-mono">{m.closeTime}</span>
+                  <span className="text-muted-foreground text-xs"> ({m.currency})</span>
+                </div>
+                {m.breakTime && (
+                  <p className="text-xs text-muted-foreground">Lunch: {m.breakTime}</p>
+                )}
+                <p className="mt-1 text-xs">
+                  Local: <span className="font-mono font-bold">{m.localTime}</span>
+                  {!m.isTradingDay && (
+                    <span className="ml-1 text-red-500">Holiday</span>
+                  )}
+                </p>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Upcoming Schedule */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Upcoming Schedule</CardTitle>
+          <CardDescription>Today's remaining jobs</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {schedule.data?.upcoming.length === 0 && (
+            <p className="text-sm text-muted-foreground">No more jobs today</p>
+          )}
+          <div className="space-y-1">
+            {schedule.data?.upcoming.slice(0, 12).map((j, i) => (
+              <div
+                key={`${j.marketId}-${j.localTime}-${i}`}
+                className="flex items-center justify-between rounded-md border px-3 py-1.5"
+              >
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="font-mono text-xs w-8 justify-center">
+                    {j.marketId.toUpperCase()}
+                  </Badge>
+                  <Badge
+                    variant={
+                      j.mode === "premarket"
+                        ? "secondary"
+                        : j.mode === "eod"
+                          ? "outline"
+                          : "default"
+                    }
+                    className="text-xs"
+                  >
+                    {j.mode}
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">{j.name}</span>
+                </div>
+                <div className="text-right">
+                  <span className="font-mono text-sm font-bold">
+                    {j.nextRunUtc ? formatTimeJST(j.nextRunUtc) : "—"}
+                  </span>
+                  <span className="ml-2 font-mono text-xs text-muted-foreground">
+                    {j.localTime} {j.localTzAbbr}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 md:grid-cols-2">
         {/* Active Signals */}

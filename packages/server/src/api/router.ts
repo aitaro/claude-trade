@@ -5,6 +5,7 @@ import { researchRouter } from "./routers/research.js";
 import { performanceRouter } from "./routers/performance.js";
 import { lessonsRouter } from "./routers/lessons.js";
 import { sessionsRouter } from "./routers/sessions.js";
+import { marketsRouter } from "./routers/markets.js";
 
 export const appRouter = router({
   signals: signalsRouter,
@@ -13,6 +14,7 @@ export const appRouter = router({
   performance: performanceRouter,
   lessons: lessonsRouter,
   sessions: sessionsRouter,
+  markets: marketsRouter,
 });
 
 export type AppRouter = typeof appRouter;

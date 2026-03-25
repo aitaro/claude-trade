@@ -34,11 +34,11 @@ echo "PostgreSQL ready."
 
 # セッション作成 → pane 0 (左上: Scheduler)
 tmux new-session -d -s "$SESSION" -n "dev" -x 200 -y 50
-tmux send-keys -t "$SESSION:dev" "cd $PROJECT_DIR && npx tsx packages/server/src/agent/main.ts scheduler" Enter
+tmux send-keys -t "$SESSION:dev" "cd $PROJECT_DIR && pnpm exec tsx --watch packages/server/src/agent/main.ts scheduler" Enter
 
 # 右に分割 → pane 1 (右上: API Server)
 tmux split-window -h -t "$SESSION:dev"
-tmux send-keys -t "$SESSION:dev" "cd $PROJECT_DIR && npx tsx packages/server/src/api/server.ts" Enter
+tmux send-keys -t "$SESSION:dev" "cd $PROJECT_DIR && pnpm exec tsx --watch packages/server/src/api/server.ts" Enter
 
 # 右上ペインを下に分割 → pane 2 (右下: Docker Logs)
 tmux split-window -v -t "$SESSION:dev"
@@ -47,7 +47,7 @@ tmux send-keys -t "$SESSION:dev" "cd $PROJECT_DIR && docker compose logs -f --ta
 # 左上ペイン (pane 0) を選択して下に分割 → pane 3 (左下: Vite)
 tmux select-pane -t "$SESSION:dev.0"
 tmux split-window -v -t "$SESSION:dev"
-tmux send-keys -t "$SESSION:dev" "cd $PROJECT_DIR/packages/web && npx vite" Enter
+tmux send-keys -t "$SESSION:dev" "cd $PROJECT_DIR/packages/web && pnpm exec vite" Enter
 
 # 左上ペインにフォーカス
 tmux select-pane -t "$SESSION:dev.0"

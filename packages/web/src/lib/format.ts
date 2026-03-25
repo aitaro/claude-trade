@@ -24,3 +24,9 @@ export function formatDateTimeFull(date: string | Date | null | undefined): stri
   if (!d) return "";
   return format(d, "yyyy/MM/dd HH:mm:ss", { locale: ja });
 }
+
+export function formatTimeJST(date: string | Date | null | undefined): string {
+  const d = toDate(date);
+  if (!d) return "";
+  return format(d, "HH:mm", { locale: ja });
+}
