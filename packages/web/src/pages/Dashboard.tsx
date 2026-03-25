@@ -8,6 +8,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { TipBadge } from "@/components/tip-badge";
+import {
+  SIGNAL_TYPE_LABELS,
+  SESSION_MODE_LABELS,
+  SESSION_STATUS_LABELS,
+} from "@/lib/labels";
 
 export function Dashboard() {
   const snapshot = trpc.performance.latestSnapshot.useQuery();
@@ -159,7 +165,8 @@ export function Dashboard() {
                   <Badge variant="outline" className="font-mono text-xs w-8 justify-center">
                     {j.marketId.toUpperCase()}
                   </Badge>
-                  <Badge
+                  <TipBadge
+                    tip={SESSION_MODE_LABELS[j.mode]}
                     variant={
                       j.mode === "premarket"
                         ? "secondary"
@@ -170,7 +177,7 @@ export function Dashboard() {
                     className="text-xs"
                   >
                     {j.mode}
-                  </Badge>
+                  </TipBadge>
                   <span className="text-sm text-muted-foreground">{j.name}</span>
                 </div>
                 <div className="text-right">
@@ -207,7 +214,8 @@ export function Dashboard() {
                 >
                   <div className="flex items-center gap-2">
                     <span className="font-mono font-bold">{s.symbol}</span>
-                    <Badge
+                    <TipBadge
+                      tip={SIGNAL_TYPE_LABELS[s.signalType]}
                       variant={
                         s.signalType === "buy"
                           ? "default"
@@ -217,7 +225,7 @@ export function Dashboard() {
                       }
                     >
                       {s.signalType}
-                    </Badge>
+                    </TipBadge>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <span>str: {s.strength?.toFixed(2)}</span>
@@ -242,8 +250,9 @@ export function Dashboard() {
                   className="flex items-center justify-between rounded-md border p-2"
                 >
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline">{s.sessionType}</Badge>
-                    <Badge
+                    <TipBadge tip={SESSION_MODE_LABELS[s.sessionType]} variant="outline">{s.sessionType}</TipBadge>
+                    <TipBadge
+                      tip={SESSION_STATUS_LABELS[s.status ?? ""]}
                       variant={
                         s.status === "completed"
                           ? "default"
@@ -253,7 +262,7 @@ export function Dashboard() {
                       }
                     >
                       {s.status}
-                    </Badge>
+                    </TipBadge>
                   </div>
                   <span className="text-xs text-muted-foreground">
                     {s.startedAt

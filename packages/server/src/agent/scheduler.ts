@@ -125,10 +125,10 @@ export function startScheduler(): void {
     });
     jobs.push({ name: `Premarket Research (${mkt.name})`, schedule: premarketCron });
 
-    // Intraday + Trading (every 30 min during market hours)
+    // Intraday + Trading (every 10 min during market hours)
     const intradayStart = mkt.openHour;
     const intradayEnd = mkt.closeHour - 1;
-    for (const minute of [5, 35]) {
+    for (const minute of [5, 15, 25, 35, 45, 55]) {
       const intradayCron = toUtcCron(
         `${intradayStart}-${intradayEnd}`,
         minute,

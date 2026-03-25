@@ -61,7 +61,7 @@ function buildScheduleJobs(mkt: MarketConfig): ScheduleJob[] {
   const intradayStart = mkt.openHour;
   const intradayEnd = mkt.closeHour - 1;
   for (let h = intradayStart; h <= intradayEnd; h++) {
-    for (const m of [5, 35]) {
+    for (const m of [5, 15, 25, 35, 45, 55]) {
       jobs.push({
         name: `Intraday + Trading`,
         marketId: mkt.marketId,

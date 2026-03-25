@@ -8,6 +8,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { TipBadge } from "@/components/tip-badge";
+import { SIGNAL_TYPE_LABELS } from "@/lib/labels";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -66,7 +68,8 @@ export function Signals() {
                     {s.symbol}
                   </TableCell>
                   <TableCell>
-                    <Badge
+                    <TipBadge
+                      tip={SIGNAL_TYPE_LABELS[s.signalType]}
                       variant={
                         s.signalType === "buy"
                           ? "default"
@@ -76,7 +79,7 @@ export function Signals() {
                       }
                     >
                       {s.signalType}
-                    </Badge>
+                    </TipBadge>
                   </TableCell>
                   <TableCell>
                     <span

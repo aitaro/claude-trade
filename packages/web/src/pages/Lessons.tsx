@@ -1,4 +1,6 @@
 import { trpc } from "@/lib/trpc";
+import { TipBadge } from "@/components/tip-badge";
+import { LESSON_TYPE_LABELS, LESSON_CATEGORY_LABELS } from "@/lib/labels";
 import {
   Card,
   CardContent,
@@ -66,8 +68,9 @@ export function Lessons() {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="mb-1 flex items-center gap-2">
-                    <Badge variant="outline">{l.lessonType}</Badge>
-                    <Badge
+                    <TipBadge tip={LESSON_TYPE_LABELS[l.lessonType]} variant="outline">{l.lessonType}</TipBadge>
+                    <TipBadge
+                      tip={LESSON_CATEGORY_LABELS[l.category]}
                       variant={
                         l.category === "positive"
                           ? "default"
@@ -77,7 +80,7 @@ export function Lessons() {
                       }
                     >
                       {l.category}
-                    </Badge>
+                    </TipBadge>
                     {l.symbol && (
                       <Badge variant="outline" className="font-mono">
                         {l.symbol}

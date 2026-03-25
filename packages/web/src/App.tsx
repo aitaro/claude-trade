@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, NavLink } from "react-router-dom";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { Dashboard } from "./pages/Dashboard";
 import { Signals } from "./pages/Signals";
 import { Research } from "./pages/Research";
@@ -17,6 +18,7 @@ const navItems = [
 
 export function App() {
   return (
+    <TooltipProvider>
     <BrowserRouter>
       <div className="min-h-screen bg-background">
         <nav className="border-b bg-card">
@@ -55,5 +57,6 @@ export function App() {
         </main>
       </div>
     </BrowserRouter>
+    </TooltipProvider>
   );
 }

@@ -1,5 +1,11 @@
 import { trpc } from "@/lib/trpc";
 import { formatDateTime } from "@/lib/format";
+import { TipBadge } from "@/components/tip-badge";
+import {
+  ORDER_STATUS_LABELS,
+  ORDER_SIDE_LABELS,
+  DECISION_ACTION_LABELS,
+} from "@/lib/labels";
 import {
   Card,
   CardContent,
@@ -54,18 +60,20 @@ export function Orders() {
                         {o.symbol}
                       </TableCell>
                       <TableCell>
-                        <Badge
+                        <TipBadge
+                          tip={ORDER_SIDE_LABELS[o.side]}
                           variant={
                             o.side === "BUY" ? "default" : "destructive"
                           }
                         >
                           {o.side}
-                        </Badge>
+                        </TipBadge>
                       </TableCell>
                       <TableCell>{o.quantity}</TableCell>
                       <TableCell>{o.orderType}</TableCell>
                       <TableCell>
-                        <Badge
+                        <TipBadge
+                          tip={ORDER_STATUS_LABELS[o.status ?? ""]}
                           variant={
                             o.status === "filled"
                               ? "default"
@@ -75,7 +83,7 @@ export function Orders() {
                           }
                         >
                           {o.status}
-                        </Badge>
+                        </TipBadge>
                       </TableCell>
                       <TableCell>
                         {o.fillPrice?.toFixed(2) ?? "—"}
@@ -118,15 +126,16 @@ export function Orders() {
                         {d.symbol}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">{d.action}</Badge>
+                        <TipBadge tip={DECISION_ACTION_LABELS[d.action]} variant="outline">{d.action}</TipBadge>
                       </TableCell>
                       <TableCell>{d.targetQuantity}</TableCell>
                       <TableCell>
-                        <Badge
+                        <TipBadge
+                          tip={d.approved ? "リスクチェック全項目パス。発注実行" : "リスクチェック不合格。発注拒否"}
                           variant={d.approved ? "default" : "destructive"}
                         >
                           {d.approved ? "Yes" : "No"}
-                        </Badge>
+                        </TipBadge>
                       </TableCell>
                       <TableCell className="text-xs">
                         {(() => {
