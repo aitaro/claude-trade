@@ -21,7 +21,7 @@ function buildMcpServers(): Record<string, McpStdioServerConfig> {
     "claude-trade": {
       type: "stdio",
       command: "npx",
-      args: ["tsx", resolve(PROJECT_ROOT, "src/mcp-server/server.ts")],
+      args: ["tsx", resolve(PROJECT_ROOT, "packages/server/src/mcp-server/server.ts")],
     },
   };
 }

@@ -23,7 +23,7 @@ function runTradingEngine(marketIds: string[]): void {
   try {
     const result = execFileSync("npx", [
       "tsx",
-      resolve(PROJECT_ROOT, "src/trading-engine/main.ts"),
+      resolve(PROJECT_ROOT, "packages/server/src/trading-engine/main.ts"),
       "--market",
       marketsStr,
     ], {

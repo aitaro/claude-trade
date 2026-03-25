@@ -1,16 +1,3 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.egg-info/
-build/
-.eggs/
-*.egg
-
-# Virtual environments
-.venv/
-venv/
-
 # Node
 node_modules/
 dist/

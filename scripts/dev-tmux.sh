@@ -30,16 +30,23 @@ echo "PostgreSQL ready."
 tmux new-session -d -s "$SESSION" -n "scheduler" -x 200 -y 50
 
 # ── Window 0: Scheduler (上) + Docker Logs (下) ──
-tmux send-keys -t "$SESSION:scheduler" "cd $PROJECT_DIR && npx tsx src/agent/main.ts scheduler" Enter
+tmux send-keys -t "$SESSION:scheduler" "cd $PROJECT_DIR && npx tsx packages/server/src/agent/main.ts scheduler" Enter
 tmux split-window -v -t "$SESSION:scheduler" -p 40
 tmux send-keys -t "$SESSION:scheduler.1" "cd $PROJECT_DIR && docker compose logs -f" Enter
 tmux select-pane -t "$SESSION:scheduler.0"
 
-# ── Window 1: Shell (作業用) ──
+# ── Window 1: API + Web (上: API, 下: Vite) ──
+tmux new-window -t "$SESSION" -n "dashboard"
+tmux send-keys -t "$SESSION:dashboard" "cd $PROJECT_DIR && npx tsx packages/server/src/api/server.ts" Enter
+tmux split-window -v -t "$SESSION:dashboard" -p 50
+tmux send-keys -t "$SESSION:dashboard.1" "cd $PROJECT_DIR/packages/web && npx vite" Enter
+tmux select-pane -t "$SESSION:dashboard.0"
+
+# ── Window 2: Shell (作業用) ──
 tmux new-window -t "$SESSION" -n "shell"
 tmux send-keys -t "$SESSION:shell" "cd $PROJECT_DIR" Enter
 
-# ── Window 2: DB ──
+# ── Window 3: DB ──
 tmux new-window -t "$SESSION" -n "db"
 tmux send-keys -t "$SESSION:db" "cd $PROJECT_DIR && echo 'task db:psql or task db:signals or open http://localhost:8081'" Enter
 
@@ -52,8 +59,12 @@ echo ""
 echo "  tmux session: $SESSION"
 echo "  Windows:"
 echo "    0:scheduler  - Scheduler (上) + Docker Logs (下)"
-echo "    1:shell      - 作業用シェル"
-echo "    2:db         - DB操作"
+echo "    1:dashboard  - API server (上) + Vite dev (下)"
+echo "    2:shell      - 作業用シェル"
+echo "    3:db         - DB操作"
+echo ""
+echo "  Dashboard: http://localhost:5173"
+echo "  pgweb:     http://localhost:8081"
 echo ""
 echo "  Attach: tmux attach -t $SESSION"
 echo "  or:     task dev:attach"

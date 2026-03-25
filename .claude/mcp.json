@@ -2,7 +2,7 @@
   "mcpServers": {
     "claude-trade": {
       "command": "npx",
-      "args": ["tsx", "src/mcp-server/server.ts"]
+      "args": ["tsx", "packages/server/src/mcp-server/server.ts"]
     }
   }
 }

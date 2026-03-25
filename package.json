@@ -2,34 +2,31 @@
   "name": "claude-trade",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
   "scripts": {
-    "build": "tsc",
-    "mcp-server": "tsx src/mcp-server/server.ts",
-    "trade": "tsx src/trading-engine/main.ts",
-    "agent": "tsx src/agent/main.ts",
-    "migrate": "tsx src/db/migrate.ts",
-    "generate": "drizzle-kit generate",
-    "db:push": "drizzle-kit push"
-  },
-  "dependencies": {
-    "@anthropic-ai/claude-code": "^1.0.0",
-    "@stoqey/ib": "^1.5.3",
-    "dotenv": "^16.4.7",
-    "drizzle-orm": "^0.44.0",
-    "fastmcp": "^3.34.0",
-    "finnhub": "^1.2.18",
-    "node-cron": "^3.0.3",
-    "pg": "^8.13.1",
-    "yaml": "^2.7.0",
-    "zod": "^3.24.0"
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "mcp-server": "tsx packages/server/src/mcp-server/server.ts",
+    "trade": "tsx packages/server/src/trading-engine/main.ts",
+    "agent": "tsx packages/server/src/agent/main.ts",
+    "api": "tsx packages/server/src/api/server.ts",
+    "migrate": "tsx packages/server/src/db/migrate.ts",
+    "db:push": "drizzle-kit push",
+    "db:generate": "drizzle-kit generate"
   },
   "devDependencies": {
-    "@types/node": "^22.10.0",
-    "@types/node-cron": "^3.0.11",
-    "@types/pg": "^8.11.10",
-    "drizzle-kit": "^0.30.0",
-    "tsx": "^4.19.0",
-    "typescript": "^5.7.0"
+    "@biomejs/biome": "^1.9.4"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@biomejs/biome",
+      "esbuild",
+      "msw",
+      "tldjs"
+    ],
+    "ignoredBuiltDependencies": [
+      "msw",
+      "tldjs"
+    ]
   }
 }

@@ -44,19 +44,19 @@ tasks:
   research:
     desc: "Research Agent 単発実行 (例: task research -- intraday --market us)"
     cmds:
-      - npx tsx src/agent/main.ts run {{.CLI_ARGS | default "intraday --market us"}}
+      - npx tsx packages/server/src/agent/main.ts run {{.CLI_ARGS | default "intraday --market us"}}
 
   scheduler:
     desc: "Agent スケジューラ起動"
     cmds:
-      - npx tsx src/agent/main.ts scheduler
+      - npx tsx packages/server/src/agent/main.ts scheduler
 
   # ── Trading Engine ──
 
   trade:
     desc: "Trading Engine 単発実行 (例: task trade -- --market us)"
     cmds:
-      - npx tsx src/trading-engine/main.ts {{.CLI_ARGS | default "--market us"}}
+      - npx tsx packages/server/src/trading-engine/main.ts {{.CLI_ARGS | default "--market us"}}
 
   # ── DB ──
 
@@ -97,14 +97,38 @@ tasks:
       - npx drizzle-kit push
       - echo "==> セットアップ完了"
 
-  # ── ビルド ──
+  # ── API & Web ──
 
-  build:
-    desc: "TypeScript ビルド"
+  api:
+    desc: "tRPC API サーバー起動 (port 3100)"
     cmds:
-      - npx tsc
+      - npx tsx packages/server/src/api/server.ts
+
+  web:
+    desc: "Web ダッシュボード起動 (dev mode)"
+    dir: packages/web
+    cmds:
+      - npx vite
+
+  web:build:
+    desc: "Web ダッシュボードビルド"
+    dir: packages/web
+    cmds:
+      - npx vite build
+
+  # ── Lint & Build ──
+
+  lint:
+    desc: "Biome lint + format check"
+    cmds:
+      - npx biome check .
+
+  lint:fix:
+    desc: "Biome lint + format fix"
+    cmds:
+      - npx biome check --write .
 
   typecheck:
-    desc: "型チェックのみ (ビルドなし)"
+    desc: "型チェック (server)"
     cmds:
-      - npx tsc --noEmit
+      - npx tsc -p packages/server/tsconfig.json --noEmit

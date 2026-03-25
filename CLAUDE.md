@@ -1,5 +1,10 @@
 # Claude Trade — AI Trading Platform
 
+## 開発方針
+
+- 大規模リファクタを恐れない。構成が正しくないと感じたら積極的に直す
+- Biome で lint/format 統一。`npm run lint:fix` で自動修正
+
 ## アーキテクチャ
 
 三段構成のトレーディングプラットフォーム:
@@ -10,51 +15,58 @@
 
 ## プロジェクト構成
 
-TypeScript monorepo (`src/` 配下):
+npm workspaces モノレポ:
 
-- `src/mcp-server/` — MCP Server (fastmcp TS版)
-- `src/trading-engine/` — Deterministic Trading Engine
-- `src/agent/` — Agent Runner (Claude Code SDK)
-- `src/db/` — 共有 DB レイヤー (Drizzle ORM)
-- `src/config.ts` — 共有設定
+```
+packages/
+├── server/           # Backend
+│   └── src/
+│       ├── mcp-server/      MCP Server (fastmcp TS版)
+│       ├── trading-engine/  Deterministic Trading Engine
+│       ├── agent/           Agent Runner (Claude Code SDK)
+│       ├── api/             tRPC API サーバー
+│       ├── db/              共有 DB レイヤー (Drizzle ORM)
+│       └── config.ts        共有設定
+└── web/              # Dashboard (React + Vite + shadcn/ui)
+    └── src/
+```
+
 - `prompts/` — Research Agent 用プロンプト
 - `strategies/` — 戦略定義 (YAML)
-- `scripts/` — cron 用スクリプト
+- `scripts/` — 開発用スクリプト
 
 ## 開発コマンド
 
 ```bash
-# インフラ起動
-docker compose up -d
+# 全部一括起動 (tmux)
+task dev
 
-# DB スキーマ同期
-npx drizzle-kit push
+# 個別起動
+task infra        # Docker (postgres + ib-gateway + pgweb)
+task scheduler    # Agent スケジューラ
+task api          # tRPC API サーバー (port 3100)
+task web          # Web ダッシュボード (port 5173)
+task research     # Research Agent 単発実行
+task trade        # Trading Engine 単発実行
 
-# MCP サーバー起動
-npx tsx src/mcp-server/server.ts
+# DB
+npx drizzle-kit push   # スキーマ同期
 
-# Trading Engine 実行
-npx tsx src/trading-engine/main.ts --market us
-
-# Research Agent 実行
-npx tsx src/agent/main.ts run intraday --market us
-
-# スケジューラ起動
-npx tsx src/agent/main.ts scheduler
-
-# 型チェック
-npx tsc --noEmit
+# Lint & 型チェック
+task lint         # Biome check
+task lint:fix     # Biome auto-fix
+task typecheck    # TypeScript check
 ```
 
 ## MCP サーバー登録
 
-`.claude/mcp.json` に以下を追加:
+`.claude/mcp.json`:
 ```json
 {
   "mcpServers": {
     "claude-trade": {
       "command": "npx",
-      "args": ["tsx", "src/mcp-server/server.ts"]
+      "args": ["tsx", "packages/server/src/mcp-server/server.ts"]
     }
   }
 }
@@ -62,8 +74,7 @@ npx tsc --noEmit
 
 ## DB
 
-PostgreSQL 16 (docker-compose で起動)。テーブルは `src/db/schema.ts` で Drizzle ORM で定義。
-`npx drizzle-kit push` でスキーマ同期。
+PostgreSQL 16 (docker-compose で起動)。テーブルは `packages/server/src/db/schema.ts` で Drizzle ORM で定義。
 
 主要テーブル: signals, research_reports, decisions, orders, risk_state, daily_performance, position_snapshots, account_snapshots, session_logs, signal_outcomes, lessons, news_items
 

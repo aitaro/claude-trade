@@ -5,7 +5,7 @@ import { dirname, resolve } from "path";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-export const PROJECT_ROOT = resolve(__dirname, "..");
+export const PROJECT_ROOT = resolve(__dirname, "../../..");
 
 export function loadEnv() {
   config({ path: resolve(PROJECT_ROOT, ".env") });

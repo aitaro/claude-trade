@@ -8,7 +8,7 @@ const port = process.env.POSTGRES_PORT || "5432";
 const database = process.env.POSTGRES_DB || "claude_trade";
 
 export default defineConfig({
-  schema: "./src/db/schema.ts",
+  schema: "./packages/server/src/db/schema.ts",
   out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {
