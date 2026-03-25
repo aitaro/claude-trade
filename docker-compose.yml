@@ -1,0 +1,47 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-claude_trade}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_in_production}
+      POSTGRES_DB: ${POSTGRES_DB:-claude_trade}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-claude_trade}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  ib-gateway:
+    image: ghcr.io/gnzsnz/ib-gateway:stable
+    entrypoint: ["/bin/sh", "/opt/ib-entrypoint.sh"]
+    volumes:
+      - ./scripts/ib-gateway-entrypoint.sh:/opt/ib-entrypoint.sh:ro
+    environment:
+      TWS_USERID: ${TWS_USERID:-}
+      TWS_PASSWORD: ${TWS_PASSWORD:-}
+      TRADING_MODE: paper
+      TWS_ACCEPT_INCOMING: "true"
+      TWOFA_TIMEOUT_ACTION: restart
+      READ_ONLY_API: "no"
+      EXISTING_SESSION_DETECTED_ACTION: primaryoverride
+      IB_RESTART_DELAY: "180"
+    network_mode: host
+    restart: unless-stopped
+
+  pgweb:
+    image: sosedoff/pgweb
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-claude_trade}:${POSTGRES_PASSWORD:-change_me_in_production}@postgres:5432/${POSTGRES_DB:-claude_trade}?sslmode=disable
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:

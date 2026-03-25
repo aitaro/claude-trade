@@ -1,0 +1,57 @@
+# US Trading Strategy
+name: us
+description: "バランス型米国株戦略"
+version: "0.1.0"
+
+# 取引所設定
+exchange: SMART
+currency: USD
+
+# ウォッチリスト
+watchlist:
+  # テクノロジー
+  - AAPL
+  - MSFT
+  - GOOGL
+  - AMZN
+  - NVDA
+  # 金融
+  - JPM
+  - GS
+  # ヘルスケア
+  - JNJ
+  - UNH
+  # 消費
+  - COST
+  # ETF (ベンチマーク)
+  - SPY
+  - QQQ
+
+# シグナル生成パラメータ
+signal:
+  min_confidence: 0.7         # buy/sell シグナルの最低確信度
+  hold_confidence: 0.5        # hold シグナルの最低確信度
+  max_signals_per_session: 5  # 1セッションの最大シグナル数
+  default_ttl_hours: 8        # シグナルのデフォルト有効期間
+  premarket_ttl_hours: 12     # プレマーケットシグナルの有効期間
+
+# ポジション管理
+position:
+  max_positions: 8            # 同時最大ポジション数
+  max_position_pct: 10.0      # 1銘柄の最大配分 (NAV %)
+  target_cash_pct: 20.0       # 目標現金比率 (%)
+
+# テクニカル指標パラメータ
+technical:
+  sma_short: 20               # 短期移動平均
+  sma_long: 50                # 長期移動平均
+  rsi_period: 14
+  rsi_overbought: 70
+  rsi_oversold: 30
+  volume_ma_period: 20        # 出来高移動平均
+
+# リスク管理 (Trading Engine 側でも別途制御)
+risk:
+  daily_loss_limit_pct: 3.0
+  max_daily_orders: 20
+  stop_loss_pct: 5.0          # 個別銘柄ストップロス

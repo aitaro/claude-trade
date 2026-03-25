@@ -1,0 +1,59 @@
+# Europe Trading Strategy
+name: eu
+description: "欧州株戦略"
+version: "0.1.0"
+
+# 取引所設定
+exchange: SMART
+currency: EUR
+
+# ウォッチリスト (IB シンボル)
+watchlist:
+  # 半導体
+  - ASML    # ASML (AEB/Euronext Amsterdam)
+  # ソフトウェア
+  - SAP     # SAP (IBIS/Xetra)
+  # ラグジュアリー
+  - MC      # LVMH (SBF/Euronext Paris)
+  - RMS     # エルメス (SBF)
+  # 製薬
+  - NOVN    # ノバルティス (EBS/SIX)
+  - SAN     # サノフィ (SBF)
+  # エネルギー
+  - SHEL    # シェル (AEB)
+  - TTE     # トタル (SBF)
+  # 金融
+  - BNP     # BNPパリバ (SBF)
+  # 自動車
+  - VOW3    # フォルクスワーゲン (IBIS)
+  # ETF (ベンチマーク)
+  - MEUD    # Lyxor EURO STOXX 50
+
+# シグナル生成パラメータ
+signal:
+  min_confidence: 0.7
+  hold_confidence: 0.5
+  max_signals_per_session: 5
+  default_ttl_hours: 8
+  premarket_ttl_hours: 10
+
+# ポジション管理
+position:
+  max_positions: 8
+  max_position_pct: 10.0
+  target_cash_pct: 20.0
+
+# テクニカル指標パラメータ
+technical:
+  sma_short: 20
+  sma_long: 50
+  rsi_period: 14
+  rsi_overbought: 70
+  rsi_oversold: 30
+  volume_ma_period: 20
+
+# リスク管理
+risk:
+  daily_loss_limit_pct: 3.0
+  max_daily_orders: 20
+  stop_loss_pct: 5.0

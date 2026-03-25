@@ -1,0 +1,57 @@
+# UK Trading Strategy
+name: uk
+description: "英国株戦略"
+version: "0.1.0"
+
+# 取引所設定
+exchange: SMART
+currency: GBP
+
+# ウォッチリスト (IB シンボル)
+watchlist:
+  # 製薬
+  - AZN     # AstraZeneca
+  - GSK     # GSK
+  # 金融
+  - HSBA    # HSBC
+  - BARC    # Barclays
+  - LSEG    # London Stock Exchange Group
+  # エネルギー
+  - BP.     # BP
+  # 消費
+  - ULVR    # Unilever
+  - DGE     # Diageo
+  # マイニング
+  - RIO     # Rio Tinto
+  - GLEN    # Glencore
+  # ETF (ベンチマーク)
+  - ISF     # iShares Core FTSE 100
+
+# シグナル生成パラメータ
+signal:
+  min_confidence: 0.7
+  hold_confidence: 0.5
+  max_signals_per_session: 5
+  default_ttl_hours: 8
+  premarket_ttl_hours: 10
+
+# ポジション管理
+position:
+  max_positions: 8
+  max_position_pct: 10.0
+  target_cash_pct: 20.0
+
+# テクニカル指標パラメータ
+technical:
+  sma_short: 20
+  sma_long: 50
+  rsi_period: 14
+  rsi_overbought: 70
+  rsi_oversold: 30
+  volume_ma_period: 20
+
+# リスク管理
+risk:
+  daily_loss_limit_pct: 3.0
+  max_daily_orders: 20
+  stop_loss_pct: 5.0

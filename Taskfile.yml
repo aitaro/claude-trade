@@ -1,0 +1,92 @@
+version: "3"
+
+vars:
+  SESSION: claude-trade
+
+tasks:
+  # ── 開発環境 ──
+
+  dev:
+    desc: "開発環境をtmuxで一括起動"
+    cmds:
+      - scripts/dev-tmux.sh
+
+  dev:attach:
+    desc: "起動中の開発環境tmuxセッションにアタッチ"
+    cmds:
+      - tmux attach-session -t {{.SESSION}}
+
+  dev:stop:
+    desc: "開発環境を停止"
+    cmds:
+      - docker compose down
+      - tmux kill-session -t {{.SESSION}} 2>/dev/null || true
+
+  # ── インフラ ──
+
+  infra:
+    desc: "Docker インフラ起動 (postgres + ib-gateway + pgweb)"
+    cmds:
+      - docker compose up -d
+
+  infra:stop:
+    desc: "Docker インフラ停止"
+    cmds:
+      - docker compose down
+
+  infra:logs:
+    desc: "インフラのログ表示"
+    cmds:
+      - docker compose logs -f {{.CLI_ARGS}}
+
+  # ── Research Agent ──
+
+  research:
+    desc: "Research Agent 単発実行 (例: task research -- intraday --market us)"
+    dir: agent
+    cmds:
+      - uv run python -m agent_runner.main run {{.CLI_ARGS | default "intraday --market us"}}
+
+  scheduler:
+    desc: "Agent スケジューラ起動"
+    dir: agent
+    cmds:
+      - uv run python -m agent_runner.main scheduler
+
+  # ── Trading Engine ──
+
+  trade:
+    desc: "Trading Engine 単発実行 (例: task trade -- --market us)"
+    dir: trading-engine
+    cmds:
+      - uv run python -m trading_engine.main {{.CLI_ARGS | default "--market us"}}
+
+  # ── DB ──
+
+  db:web:
+    desc: "pgweb を開く (http://localhost:8081)"
+    cmds:
+      - open http://localhost:8081
+
+  db:psql:
+    desc: "psql で DB に接続"
+    cmds:
+      - docker compose exec postgres psql -U claude_trade -d claude_trade
+
+  db:signals:
+    desc: "アクティブなシグナルを表示"
+    cmds:
+      - docker compose exec postgres psql -U claude_trade -d claude_trade -c "SELECT symbol, signal_type, strength, confidence, source_strategy, created_at FROM signals WHERE is_active = true AND expires_at > now() ORDER BY created_at DESC;"
+
+  # ── セットアップ ──
+
+  setup:
+    desc: "初回セットアップ"
+    cmds:
+      - cp -n .env.example .env || true
+      - echo "==> .env を編集してください (TWS_USERID, TWS_PASSWORD, FINNHUB_API_KEY)"
+      - docker compose up -d
+      - cd agent && uv sync
+      - cd trading-engine && uv sync
+      - cd mcp-server && uv sync
+      - echo "==> セットアップ完了"

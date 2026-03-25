@@ -1,0 +1,58 @@
+# Japan Trading Strategy
+name: jp
+description: "日本株戦略"
+version: "0.1.0"
+
+# 取引所設定
+exchange: SMART
+currency: JPY
+
+# ウォッチリスト (IB シンボル)
+watchlist:
+  # テクノロジー
+  - 6758    # ソニー
+  - 6861    # キーエンス
+  - 6902    # デンソー
+  # 自動車
+  - 7203    # トヨタ
+  - 7267    # ホンダ
+  # 金融
+  - 8306    # 三菱UFJ
+  - 8316    # 三井住友
+  # 商社
+  - 8058    # 三菱商事
+  - 8031    # 三井物産
+  # 半導体
+  - 8035    # 東京エレクトロン
+  - 6723    # ルネサス
+  # ETF (ベンチマーク)
+  - 1321    # 日経225連動型ETF
+
+# シグナル生成パラメータ
+signal:
+  min_confidence: 0.7
+  hold_confidence: 0.5
+  max_signals_per_session: 5
+  default_ttl_hours: 6
+  premarket_ttl_hours: 8
+
+# ポジション管理
+position:
+  max_positions: 8
+  max_position_pct: 10.0
+  target_cash_pct: 20.0
+
+# テクニカル指標パラメータ
+technical:
+  sma_short: 20
+  sma_long: 50
+  rsi_period: 14
+  rsi_overbought: 70
+  rsi_oversold: 30
+  volume_ma_period: 20
+
+# リスク管理
+risk:
+  daily_loss_limit_pct: 3.0
+  max_daily_orders: 20
+  stop_loss_pct: 5.0
