@@ -16,6 +16,8 @@ import { loadEnv } from "../config.js";
 import type { OrderRequest } from "./portfolio-calc.js";
 
 // TickType numeric values
+const TICK_BID = 1;
+const TICK_ASK = 2;
 const TICK_LAST = 4;
 const TICK_CLOSE = 9;
 
@@ -282,7 +284,9 @@ export class Executor {
     };
 
     return new Promise<number>((resolve) => {
-      let price = 0;
+      let bid = 0;
+      let ask = 0;
+      let last = 0;
 
       const handler = (
         tickerId: number,
@@ -292,9 +296,10 @@ export class Executor {
         if (tickerId !== reqId) return;
         if (isNaN(value) || value <= 0) return;
         const tt = tickType as unknown as number;
-        if (tt === TICK_LAST || tt === TICK_CLOSE) {
-          price = value;
-        }
+        if (tt === TICK_BID) bid = value;
+        else if (tt === TICK_ASK) ask = value;
+        else if (tt === TICK_LAST) last = value;
+        else if (tt === TICK_CLOSE && last === 0) last = value;
       };
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -309,7 +314,12 @@ export class Executor {
       setTimeout(() => {
         this.ib.cancelMktData(reqId);
         this.ib.removeListener(EventName.tickPrice, handler);
-        resolve(price);
+        // FX: prefer last, then bid/ask midpoint
+        if (last > 0) resolve(last);
+        else if (bid > 0 && ask > 0) resolve((bid + ask) / 2);
+        else if (bid > 0) resolve(bid);
+        else if (ask > 0) resolve(ask);
+        else resolve(0);
       }, 3000);
     });
   }
