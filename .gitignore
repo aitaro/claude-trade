@@ -3,7 +3,6 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.egg-info/
-dist/
 build/
 .eggs/
 *.egg
@@ -11,6 +10,10 @@ build/
 # Virtual environments
 .venv/
 venv/
+
+# Node
+node_modules/
+dist/
 
 # Environment
 .env

@@ -30,7 +30,7 @@ echo "PostgreSQL ready."
 tmux new-session -d -s "$SESSION" -n "scheduler" -x 200 -y 50
 
 # ── Window 0: Scheduler (上) + Docker Logs (下) ──
-tmux send-keys -t "$SESSION:scheduler" "cd $PROJECT_DIR/agent && uv run python -m agent_runner.main scheduler" Enter
+tmux send-keys -t "$SESSION:scheduler" "cd $PROJECT_DIR && npx tsx src/agent/main.ts scheduler" Enter
 tmux split-window -v -t "$SESSION:scheduler" -p 40
 tmux send-keys -t "$SESSION:scheduler.1" "cd $PROJECT_DIR && docker compose logs -f" Enter
 tmux select-pane -t "$SESSION:scheduler.0"

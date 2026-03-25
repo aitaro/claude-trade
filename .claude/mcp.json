@@ -1,9 +1,8 @@
 {
   "mcpServers": {
     "claude-trade": {
-      "command": "uv",
-      "args": ["run", "--directory", "mcp-server", "python", "-m", "claude_trade.server"],
-      "env": {}
+      "command": "npx",
+      "args": ["tsx", "src/mcp-server/server.ts"]
     }
   }
 }

@@ -43,25 +43,32 @@ tasks:
 
   research:
     desc: "Research Agent 単発実行 (例: task research -- intraday --market us)"
-    dir: agent
     cmds:
-      - uv run python -m agent_runner.main run {{.CLI_ARGS | default "intraday --market us"}}
+      - npx tsx src/agent/main.ts run {{.CLI_ARGS | default "intraday --market us"}}
 
   scheduler:
     desc: "Agent スケジューラ起動"
-    dir: agent
     cmds:
-      - uv run python -m agent_runner.main scheduler
+      - npx tsx src/agent/main.ts scheduler
 
   # ── Trading Engine ──
 
   trade:
     desc: "Trading Engine 単発実行 (例: task trade -- --market us)"
-    dir: trading-engine
     cmds:
-      - uv run python -m trading_engine.main {{.CLI_ARGS | default "--market us"}}
+      - npx tsx src/trading-engine/main.ts {{.CLI_ARGS | default "--market us"}}
 
   # ── DB ──
+
+  db:migrate:
+    desc: "DB マイグレーション (スキーマ同期)"
+    cmds:
+      - npx drizzle-kit push
+
+  db:generate:
+    desc: "Drizzle マイグレーションファイル生成"
+    cmds:
+      - npx drizzle-kit generate
 
   db:web:
     desc: "pgweb を開く (http://localhost:8081)"
@@ -86,7 +93,18 @@ tasks:
       - cp -n .env.example .env || true
       - echo "==> .env を編集してください (TWS_USERID, TWS_PASSWORD, FINNHUB_API_KEY)"
       - docker compose up -d
-      - cd agent && uv sync
-      - cd trading-engine && uv sync
-      - cd mcp-server && uv sync
+      - npm install
+      - npx drizzle-kit push
       - echo "==> セットアップ完了"
+
+  # ── ビルド ──
+
+  build:
+    desc: "TypeScript ビルド"
+    cmds:
+      - npx tsc
+
+  typecheck:
+    desc: "型チェックのみ (ビルドなし)"
+    cmds:
+      - npx tsc --noEmit

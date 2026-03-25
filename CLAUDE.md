@@ -4,17 +4,22 @@
 
 三段構成のトレーディングプラットフォーム:
 
-- **Stage 1 (Research Agent)**: Agent SDK が Claude を起動 → MCP ツールで市場分析・シグナル生成
-- **Stage 2 (Trading Engine)**: Python が DB のシグナルを読み、deterministic にリスクチェック・発注
-- **Stage 3 (EOD Review)**: 取引振り返り・学習（Agent SDK 経由）
+- **Stage 1 (Research Agent)**: Claude Code SDK が Claude を起動 → MCP ツールで市場分析・シグナル生成
+- **Stage 2 (Trading Engine)**: Deterministic にリスクチェック・発注
+- **Stage 3 (EOD Review)**: 取引振り返り・学習（Claude Code SDK 経由）
 
 ## プロジェクト構成
 
-- `mcp-server/` — FastMCP サーバー（Research Agent 用ツール群: 16ツール）
-- `trading-engine/` — Deterministic Trading Engine（Python）
-- `prompts/` — Research Agent 用プロンプト (premarket / research-loop / eod-review / final-judge)
-- `strategies/` — 戦略定義 (YAML: watchlist, signal params, risk config)
-- `scripts/` — cron 用スクリプト (market check, research runner, trading runner, backup)
+TypeScript monorepo (`src/` 配下):
+
+- `src/mcp-server/` — MCP Server (fastmcp TS版)
+- `src/trading-engine/` — Deterministic Trading Engine
+- `src/agent/` — Agent Runner (Claude Code SDK)
+- `src/db/` — 共有 DB レイヤー (Drizzle ORM)
+- `src/config.ts` — 共有設定
+- `prompts/` — Research Agent 用プロンプト
+- `strategies/` — 戦略定義 (YAML)
+- `scripts/` — cron 用スクリプト
 
 ## 開発コマンド
 
@@ -22,11 +27,23 @@
 # インフラ起動
 docker compose up -d
 
+# DB スキーマ同期
+npx drizzle-kit push
+
 # MCP サーバー起動
-cd mcp-server && uv run python -m claude_trade.server
+npx tsx src/mcp-server/server.ts
 
 # Trading Engine 実行
-cd trading-engine && uv run python -m trading_engine.main
+npx tsx src/trading-engine/main.ts --market us
+
+# Research Agent 実行
+npx tsx src/agent/main.ts run intraday --market us
+
+# スケジューラ起動
+npx tsx src/agent/main.ts scheduler
+
+# 型チェック
+npx tsc --noEmit
 ```
 
 ## MCP サーバー登録
@@ -36,9 +53,8 @@ cd trading-engine && uv run python -m trading_engine.main
 {
   "mcpServers": {
     "claude-trade": {
-      "command": "uv",
-      "args": ["run", "--directory", "mcp-server", "python", "-m", "claude_trade.server"],
-      "env": {}
+      "command": "npx",
+      "args": ["tsx", "src/mcp-server/server.ts"]
     }
   }
 }
@@ -46,14 +62,14 @@ cd trading-engine && uv run python -m trading_engine.main
 
 ## DB
 
-PostgreSQL 16 (docker-compose で起動)。テーブルは `mcp-server/src/claude_trade/models.py` で定義。
-`init_db()` で自動マイグレーション (create_all)。
+PostgreSQL 16 (docker-compose で起動)。テーブルは `src/db/schema.ts` で Drizzle ORM で定義。
+`npx drizzle-kit push` でスキーマ同期。
 
-主要テーブル: signals, research_reports, decisions, orders, risk_state, daily_performance, position_snapshots, account_snapshots, session_logs
+主要テーブル: signals, research_reports, decisions, orders, risk_state, daily_performance, position_snapshots, account_snapshots, session_logs, signal_outcomes, lessons, news_items
 
 ## 安全制約
 
-- Paper Trading のみ（`live_trading_enabled = false`）
+- Paper Trading のみ（`LIVE_TRADING_ENABLED=false`）
 - Kill switch: 日次損失 > 3% で自動発動
 - 最大ポジション: NAV の 10%
 - 最大日次注文数: 20
