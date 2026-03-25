@@ -86,6 +86,13 @@ def _load_prompt(mode: str, market: str = "us") -> str:
 
 - `get_quote`, `get_historical_data` には `exchange="{mkt.ib_exchange}"`, `currency="{mkt.ib_currency}"` を渡してください
 - `write_signal` の `strategy` には `"{mkt.market_id}"` を指定してください
+
+## フィードバックループ
+
+- 分析開始時に `get_relevant_lessons(source_strategy="{mkt.market_id}")` で過去の学びを確認してください
+- 過去の学びに基づいて分析の重点を調整してください
+- `get_signal_accuracy(source_strategy="{mkt.market_id}")` でシグナル精度の傾向を把握してください
+- EOD Review 時は `evaluate_signal` で各シグナルの事後評価を、`record_lesson` で学びの記録を行ってください
 """
     return base_prompt + market_context
 

@@ -224,3 +224,12 @@ task db:psql       # psql 接続
 ```bash
 task --list
 ```
+
+## ドキュメント
+
+- [アーキテクチャ](docs/architecture.md) — システム全体像、コンポーネント、データフロー
+- [マルチマーケット対応](docs/markets.md) — 4市場の設定、スケジュール、通貨変換
+- [安全制約・リスク管理](docs/safety.md) — Risk Engine、Kill Switch、ポジション管理
+- [フィードバックループ](docs/feedback-loop.md) — 自己学習の仕組み、シグナル評価、学びの蓄積
+- [データベース](docs/database.md) — テーブル一覧、主要クエリ
+- [開発ガイド](docs/development.md) — セットアップ、コマンド、プロジェクト構成

@@ -12,6 +12,7 @@ from claude_trade.tools.research import write_research_report, get_recent_report
 from claude_trade.tools.news import get_news, search_news, get_economic_calendar
 from claude_trade.tools.audit import get_decision_history, get_order_history, get_session_logs
 from claude_trade.tools.analytics import query_performance, get_trade_stats
+from claude_trade.tools.feedback import evaluate_signal, record_lesson, get_relevant_lessons, get_signal_accuracy
 
 
 @asynccontextmanager
@@ -56,6 +57,12 @@ mcp.tool(get_session_logs)
 # Analytics
 mcp.tool(query_performance)
 mcp.tool(get_trade_stats)
+
+# Feedback Loop
+mcp.tool(evaluate_signal)
+mcp.tool(record_lesson)
+mcp.tool(get_relevant_lessons)
+mcp.tool(get_signal_accuracy)
 
 
 if __name__ == "__main__":
