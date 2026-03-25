@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { trpc } from "@/lib/trpc";
 import {
   Card,
@@ -79,9 +81,9 @@ export function Research() {
           <CardContent>
             {detail.data ? (
               <ScrollArea className="h-[500px]">
-                <div className="prose prose-sm max-w-none whitespace-pre-wrap">
-                  {detail.data.content}
-                </div>
+                <article className="prose prose-sm max-w-none prose-headings:font-bold prose-h1:text-xl prose-h2:text-lg prose-h3:text-base prose-p:my-2 prose-ul:my-1 prose-li:my-0.5 prose-strong:text-foreground">
+                  <Markdown remarkPlugins={[remarkGfm]}>{detail.data.content}</Markdown>
+                </article>
               </ScrollArea>
             ) : (
               <p className="text-muted-foreground">

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 開発環境を tmux セッションで一括起動
+# 開発環境を tmux セッションで一括起動 (田の字レイアウト)
 # 人間が後から `tmux attach -t claude-trade` or `task dev:attach` で接続可能
 
 set -euo pipefail
@@ -26,48 +26,43 @@ until docker compose exec postgres pg_isready -U claude_trade > /dev/null 2>&1; 
 done
 echo "PostgreSQL ready."
 
-# tmux セッション作成
-tmux new-session -d -s "$SESSION" -n "scheduler" -x 200 -y 50
+# ┌──────────────┬──────────────┐
+# │  Scheduler   │   API Server │
+# ├──────────────┼──────────────┤
+# │  Vite (Web)  │  Docker Logs │
+# └──────────────┴──────────────┘
 
-# ── Window 0: Scheduler (上) + Docker Logs (下) ──
-tmux send-keys -t "$SESSION:scheduler" "cd $PROJECT_DIR && npx tsx packages/server/src/agent/main.ts scheduler" Enter
-tmux split-window -v -t "$SESSION:scheduler" -p 40
-tmux send-keys -t "$SESSION:scheduler.1" "cd $PROJECT_DIR && docker compose logs -f" Enter
-tmux select-pane -t "$SESSION:scheduler.0"
+# セッション作成 → pane 0 (左上: Scheduler)
+tmux new-session -d -s "$SESSION" -n "dev" -x 200 -y 50
+tmux send-keys -t "$SESSION:dev" "cd $PROJECT_DIR && npx tsx packages/server/src/agent/main.ts scheduler" Enter
 
-# ── Window 1: API + Web (上: API, 下: Vite) ──
-tmux new-window -t "$SESSION" -n "dashboard"
-tmux send-keys -t "$SESSION:dashboard" "cd $PROJECT_DIR && npx tsx packages/server/src/api/server.ts" Enter
-tmux split-window -v -t "$SESSION:dashboard" -p 50
-tmux send-keys -t "$SESSION:dashboard.1" "cd $PROJECT_DIR/packages/web && npx vite" Enter
-tmux select-pane -t "$SESSION:dashboard.0"
+# 右に分割 → pane 1 (右上: API Server)
+tmux split-window -h -t "$SESSION:dev"
+tmux send-keys -t "$SESSION:dev" "cd $PROJECT_DIR && npx tsx packages/server/src/api/server.ts" Enter
 
-# ── Window 2: Shell (作業用) ──
-tmux new-window -t "$SESSION" -n "shell"
-tmux send-keys -t "$SESSION:shell" "cd $PROJECT_DIR" Enter
+# 右上ペインを下に分割 → pane 2 (右下: Docker Logs)
+tmux split-window -v -t "$SESSION:dev"
+tmux send-keys -t "$SESSION:dev" "cd $PROJECT_DIR && docker compose logs -f --tail=50" Enter
 
-# ── Window 3: DB ──
-tmux new-window -t "$SESSION" -n "db"
-tmux send-keys -t "$SESSION:db" "cd $PROJECT_DIR && echo 'task db:psql or task db:signals or open http://localhost:8081'" Enter
+# 左上ペイン (pane 0) を選択して下に分割 → pane 3 (左下: Vite)
+tmux select-pane -t "$SESSION:dev.0"
+tmux split-window -v -t "$SESSION:dev"
+tmux send-keys -t "$SESSION:dev" "cd $PROJECT_DIR/packages/web && npx vite" Enter
 
-# 最初のウィンドウ (scheduler) を選択
-tmux select-window -t "$SESSION:scheduler"
+# 左上ペインにフォーカス
+tmux select-pane -t "$SESSION:dev.0"
 
 echo ""
 echo "=== claude-trade dev environment started ==="
 echo ""
-echo "  tmux session: $SESSION"
-echo "  Windows:"
-echo "    0:scheduler  - Scheduler (上) + Docker Logs (下)"
-echo "    1:dashboard  - API server (上) + Vite dev (下)"
-echo "    2:shell      - 作業用シェル"
-echo "    3:db         - DB操作"
+echo "  ┌──────────────┬──────────────┐"
+echo "  │  Scheduler   │  API :3100   │"
+echo "  ├──────────────┼──────────────┤"
+echo "  │  Vite :5173  │  Docker Logs │"
+echo "  └──────────────┴──────────────┘"
 echo ""
 echo "  Dashboard: http://localhost:5173"
 echo "  pgweb:     http://localhost:8081"
-echo ""
-echo "  Attach: tmux attach -t $SESSION"
-echo "  or:     task dev:attach"
 echo ""
 
 # アタッチ
