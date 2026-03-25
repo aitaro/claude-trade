@@ -11,6 +11,7 @@ import { checkOrder, incrementOrderCount, getRiskState } from "./risk-engine.js"
 import { checkDailyLoss } from "./kill-switch.js";
 import { Executor } from "./executor.js";
 import { recordDecision, startSession, completeSession } from "./audit.js";
+import { getStartingNav } from "./nav.js";
 import { pool } from "../db/client.js";
 
 const STRATEGY_DIR = resolve(PROJECT_ROOT, "strategies");
@@ -102,8 +103,9 @@ async function run(marketId: string, sharedExecutor?: Executor): Promise<void> {
         console.log(`[TRADING/${marketId.toUpperCase()}] NAV: ${currency} ${nav.toLocaleString()}`);
       }
 
-      // 4. 日次損失チェック
-      const killed = await checkDailyLoss(navRaw, navRaw);
+      // 4. 日次損失チェック (DB から当日開始NAVを取得)
+      const startingNav = await getStartingNav(navRaw);
+      const killed = await checkDailyLoss(navRaw, startingNav);
       if (killed) {
         console.log(`[TRADING/${marketId.toUpperCase()}] Kill switch triggered by daily loss. Aborting.`);
         await completeSession(sessionLog, { status: "aborted", summary: "Daily loss kill switch" });

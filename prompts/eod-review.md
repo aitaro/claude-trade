@@ -6,12 +6,13 @@
 
 ### Phase 1: 今日の結果収集（MCP ツール）
 
-1. `get_order_history` で今日の全注文を確認
-2. `get_decision_history` で今日の全判断を確認
-3. `get_positions` でクローズ時のポジションを確認
-4. `get_account_summary` で最終 NAV を確認
-5. `get_active_signals` で今日のシグナルを確認
-6. `query_performance` で今日の成績を把握
+1. **`capture_account_snapshot`** で口座スナップショットを DB に保存（終了 NAV として使う）
+2. **`capture_position_snapshot`** でポジションスナップショットを DB に保存
+3. `get_order_history` で今日の全注文を確認
+4. `get_decision_history` で今日の全判断を確認
+5. `get_positions` でクローズ時のポジションを確認
+6. `get_active_signals` で今日のシグナルを確認
+7. **`get_today_starting_nav`** で当日の開始 NAV を取得
 
 ### Phase 2: シグナル精度評価（重要！）
 
@@ -50,9 +51,16 @@
 - **具体的に書く**: 「テック株に注意」ではなく「NVDA は決算期間中に RSI>70 でも上昇する傾向（3回観測）」
 - **evidence に数値を入れる**: `{"accuracy": 0.8, "sample_size": 5, "signal_ids": [...]}` 等
 
-### Phase 5: レポート作成
+### Phase 5: 日次成績の記録
 
-14. `write_research_report` (type: "eod") で EOD レポートを作成
+14. **`record_daily_performance`** で日次成績を記録:
+    - `date`: 今日の日付 (YYYY-MM-DD)
+    - `starting_nav`: Phase 1 で取得した開始 NAV
+    - `ending_nav`: Phase 1 で取得した終了 NAV（capture_account_snapshot の結果）
+
+### Phase 6: レポート作成
+
+15. `write_research_report` (type: "eod") で EOD レポートを作成
 
 ## レポートに含める内容
 
@@ -61,3 +69,4 @@
 - **良かった判断 / 悪かった判断**: 具体的な分析
 - **記録した学び**: 今日 `record_lesson` で記録した内容のサマリー
 - **明日への示唆**: 翌日に向けた注意点
+- **日次成績**: 開始NAV → 終了NAV、PnL、PnL%

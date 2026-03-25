@@ -8,10 +8,11 @@
 
 ### Phase 1: 口座・ポジション状態の把握
 
-1. `get_account_summary` で NAV と余力を把握
-2. `get_positions` で持ち越しポジションを確認
-3. `query_performance` で直近の成績を把握
-4. `get_active_signals` で既存シグナルを確認
+1. **`capture_account_snapshot`** で口座スナップショットを DB に保存（当日の開始 NAV として使われる）
+2. `get_account_summary` で NAV と余力を把握
+3. `get_positions` で持ち越しポジションを確認
+4. `query_performance` で直近の成績を把握
+5. `get_active_signals` で既存シグナルを確認
 
 ### Phase 2: マクロ環境スキャン
 

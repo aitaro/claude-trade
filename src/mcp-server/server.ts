@@ -16,6 +16,12 @@ import {
   getRelevantLessons,
   getSignalAccuracy,
 } from "./tools/feedback.js";
+import {
+  captureAccountSnapshot,
+  capturePositionSnapshot,
+  recordDailyPerf,
+  getTodayStartingNav,
+} from "./tools/snapshots.js";
 
 const mcp = new FastMCP({
   name: "Claude Trade",
@@ -315,6 +321,41 @@ mcp.addTool({
   }),
   execute: async ({ source_strategy, days }) =>
     JSON.stringify(await getSignalAccuracy(source_strategy, days)),
+});
+
+// ── Snapshots ──
+
+mcp.addTool({
+  name: "capture_account_snapshot",
+  description: "IB から口座情報を取得し、DB にスナップショットを保存する。Premarket 開始時と EOD Review 時に必ず呼ぶこと。",
+  parameters: z.object({}),
+  execute: async () => JSON.stringify(await captureAccountSnapshot()),
+});
+
+mcp.addTool({
+  name: "capture_position_snapshot",
+  description: "IB から現在のポジション一覧を取得し、DB にスナップショットを保存する。EOD Review 時に呼ぶこと。",
+  parameters: z.object({}),
+  execute: async () => JSON.stringify(await capturePositionSnapshot()),
+});
+
+mcp.addTool({
+  name: "record_daily_performance",
+  description: "日次成績を記録する。EOD Review の最後に、当日の開始NAVと終了NAVを渡して呼ぶ。",
+  parameters: z.object({
+    date: z.string().describe("対象日 (YYYY-MM-DD)"),
+    starting_nav: z.number().describe("当日の開始NAV"),
+    ending_nav: z.number().describe("当日の終了NAV"),
+  }),
+  execute: async ({ date, starting_nav, ending_nav }) =>
+    JSON.stringify(await recordDailyPerf(date, starting_nav, ending_nav)),
+});
+
+mcp.addTool({
+  name: "get_today_starting_nav",
+  description: "当日の開始NAVを取得する。account_snapshots から当日最初のスナップショット、なければ前日の最後のスナップショットを返す。",
+  parameters: z.object({}),
+  execute: async () => JSON.stringify(await getTodayStartingNav()),
 });
 
 // ── Start ──
