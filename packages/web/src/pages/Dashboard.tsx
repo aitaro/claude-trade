@@ -1,4 +1,5 @@
 import { trpc } from "@/lib/trpc";
+import { formatDateTime } from "@/lib/format";
 import {
   Card,
   CardContent,
@@ -36,7 +37,7 @@ export function Dashboard() {
           <CardContent>
             <p className="text-xs text-muted-foreground">
               {snapshot.data?.account?.capturedAt
-                ? `Last: ${new Date(snapshot.data.account.capturedAt).toLocaleString()}`
+                ? `Last: ${formatDateTime(snapshot.data.account.capturedAt)}`
                 : "No snapshot yet"}
             </p>
           </CardContent>
@@ -166,7 +167,7 @@ export function Dashboard() {
                   </div>
                   <span className="text-xs text-muted-foreground">
                     {s.startedAt
-                      ? new Date(s.startedAt).toLocaleString()
+                      ? formatDateTime(s.startedAt)
                       : ""}
                   </span>
                 </div>

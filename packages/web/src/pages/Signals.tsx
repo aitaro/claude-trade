@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { formatDateTime } from "@/lib/format";
 import {
   Card,
   CardContent,
@@ -95,12 +96,12 @@ export function Signals() {
                   </TableCell>
                   <TableCell className="text-xs">
                     {s.expiresAt
-                      ? new Date(s.expiresAt).toLocaleString()
+                      ? formatDateTime(s.expiresAt)
                       : ""}
                   </TableCell>
                   <TableCell className="text-xs">
                     {s.createdAt
-                      ? new Date(s.createdAt).toLocaleString()
+                      ? formatDateTime(s.createdAt)
                       : ""}
                   </TableCell>
                 </TableRow>

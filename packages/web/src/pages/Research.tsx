@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { trpc } from "@/lib/trpc";
+import { formatDate, formatDateTime } from "@/lib/format";
 import {
   Card,
   CardContent,
@@ -51,7 +52,7 @@ export function Research() {
                       </Badge>
                       <span className="text-xs text-muted-foreground">
                         {r.createdAt
-                          ? new Date(r.createdAt).toLocaleDateString()
+                          ? formatDate(r.createdAt)
                           : ""}
                       </span>
                     </div>
@@ -73,7 +74,7 @@ export function Research() {
               <CardDescription>
                 <Badge variant="outline">{detail.data.reportType}</Badge>{" "}
                 {detail.data.createdAt
-                  ? new Date(detail.data.createdAt).toLocaleString()
+                  ? formatDateTime(detail.data.createdAt)
                   : ""}
               </CardDescription>
             )}

@@ -1,4 +1,5 @@
 import { trpc } from "@/lib/trpc";
+import { formatDateTime } from "@/lib/format";
 import {
   Card,
   CardContent,
@@ -84,7 +85,7 @@ export function Orders() {
                       </TableCell>
                       <TableCell className="text-xs">
                         {o.createdAt
-                          ? new Date(o.createdAt).toLocaleString()
+                          ? formatDateTime(o.createdAt)
                           : ""}
                       </TableCell>
                     </TableRow>
@@ -146,7 +147,7 @@ export function Orders() {
                       </TableCell>
                       <TableCell className="text-xs">
                         {d.createdAt
-                          ? new Date(d.createdAt).toLocaleString()
+                          ? formatDateTime(d.createdAt)
                           : ""}
                       </TableCell>
                     </TableRow>

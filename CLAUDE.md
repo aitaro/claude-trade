@@ -4,6 +4,8 @@
 
 - 大規模リファクタを恐れない。構成が正しくないと感じたら積極的に直す
 - Biome で lint/format 統一。`npm run lint:fix` で自動修正
+- 日付処理は date-fns を使う。`toLocaleString()` は使わない
+- フロントの日付フォーマットは `packages/web/src/lib/format.ts` に集約
 
 ## アーキテクチャ
 
