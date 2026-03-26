@@ -35,3 +35,28 @@ trade.aitaro.dev {
         format json
     }
 }
+
+docs.trade.aitaro.dev {
+    # 同じ oauth2-proxy で認証
+    @oauth2 path /oauth2/*
+    handle @oauth2 {
+        reverse_proxy localhost:4180
+    }
+
+    handle {
+        forward_auth localhost:4180 {
+            uri /oauth2/auth
+            header_up X-Forwarded-For {remote_host}
+            copy_headers X-Auth-Request-User X-Auth-Request-Email
+
+            @unauthorized status 401
+            handle_response @unauthorized {
+                redir https://docs.trade.aitaro.dev/oauth2/start?rd={uri}
+            }
+        }
+
+        root * /opt/claude-trade/docs/.vitepress/dist
+        try_files {path} /index.html
+        file_server
+    }
+}
