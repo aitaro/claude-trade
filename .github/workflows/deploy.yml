@@ -12,7 +12,7 @@ jobs:
         uses: appleboy/ssh-action@v1
         with:
           host: 34.13.45.196
-          username: deploy
+          username: aitaro
           key: ${{ secrets.GCE_SSH_KEY }}
           script: |
             cd /opt/claude-trade
