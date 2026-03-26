@@ -51,7 +51,7 @@ export class Executor {
       this.ib.once(EventName.connected, () => {
         clearTimeout(timeout);
         this.connected = true;
-        this.ib.reqMarketDataType(4); // delayed-frozen
+        this.ib.reqMarketDataType(1); // live (falls back to delayed if unavailable)
         resolve();
       });
 
