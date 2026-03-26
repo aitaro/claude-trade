@@ -20,8 +20,14 @@ export async function captureSnapshots(): Promise<void> {
       return item ? Number.parseFloat(item.value) : 0;
     };
 
+    const netLiquidation = getValue("NetLiquidation");
+    if (netLiquidation <= 0) {
+      log.warn("Account summary returned 0 NAV, skipping snapshot");
+      return;
+    }
+
     await db.insert(accountSnapshots).values({
-      netLiquidation: getValue("NetLiquidation"),
+      netLiquidation,
       totalCash: getValue("TotalCashValue"),
       buyingPower: getValue("BuyingPower"),
       grossPositionValue: getValue("GrossPositionValue"),
