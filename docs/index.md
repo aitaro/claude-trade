@@ -6,7 +6,7 @@ hero:
   actions:
     - theme: brand
       text: Architecture
-      link: /architecture
+      link: /system/architecture
     - theme: alt
       text: Dashboard
       link: https://trade.aitaro.dev

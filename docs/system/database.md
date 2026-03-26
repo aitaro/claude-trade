@@ -2,11 +2,7 @@
 
 ## 概要
 
-PostgreSQL 16 (Docker) を使用。全テーブルは `mcp-server/src/claude_trade/models.py` で SQLModel により定義。`init_db()` で自動マイグレーション（create_all）。
-
-接続先: `postgresql+asyncpg://claude_trade:***@localhost:5432/claude_trade`
-
-DB GUI: http://localhost:8081 (pgweb)
+PostgreSQL 16 (Docker) を使用。全テーブルは `packages/server/src/db/schema.ts` で Drizzle ORM により定義。スキーマ同期は `npx drizzle-kit push`。
 
 ## テーブル一覧
 
@@ -88,6 +84,6 @@ LIMIT 20;
 
 ## タイムスタンプ
 
-全タイムスタンプは UTC（timezone-naive な `datetime`）で保存。`datetime.utcnow()` を使用。
+全タイムスタンプは UTC で保存。`new Date()` を使用。
 
 基準通貨は JPY だが、DB には通貨情報は含まない。通貨変換は Trading Engine のランタイムで行う。

@@ -11,14 +11,25 @@ export default defineConfig({
     ],
     sidebar: [
       {
-        text: "Overview",
+        text: "System",
         items: [
-          { text: "Architecture", link: "/architecture" },
-          { text: "Database", link: "/database" },
-          { text: "Markets", link: "/markets" },
-          { text: "Safety", link: "/safety" },
-          { text: "Development", link: "/development" },
-          { text: "Feedback Loop", link: "/feedback-loop" },
+          { text: "Architecture", link: "/system/architecture" },
+          { text: "Database", link: "/system/database" },
+          { text: "Markets", link: "/system/markets" },
+          { text: "Safety", link: "/system/safety" },
+          { text: "Feedback Loop", link: "/system/feedback-loop" },
+        ],
+      },
+      {
+        text: "Infrastructure",
+        items: [
+          { text: "Overview", link: "/infra/overview" },
+        ],
+      },
+      {
+        text: "Development",
+        items: [
+          { text: "Development Guide", link: "/development" },
         ],
       },
       {
