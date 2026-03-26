@@ -7,9 +7,6 @@ cd "$APP_DIR"
 echo "==> Pulling latest code..."
 git pull origin main
 
-echo "==> Pulling secrets..."
-bash deploy/pull-secrets.sh
-
 echo "==> Installing dependencies..."
 pnpm install --frozen-lockfile
 

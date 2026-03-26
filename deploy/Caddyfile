@@ -1,27 +1,33 @@
-{$DOMAIN} {
-    # Google OAuth via oauth2-proxy
-    forward_auth localhost:4180 {
-        uri /oauth2/auth
-        header_up X-Forwarded-For {remote_host}
-        copy_headers X-Auth-Request-User X-Auth-Request-Email
-    }
-
-    # oauth2-proxy callback/sign-in routes
-    handle /oauth2/* {
+trade.aitaro.dev {
+    # oauth2-proxy routes (認証不要)
+    @oauth2 path /oauth2/*
+    handle @oauth2 {
         reverse_proxy localhost:4180
     }
 
-    # API: strip /api prefix and proxy to tRPC server
-    handle /api/* {
-        uri strip_prefix /api
-        reverse_proxy localhost:3100
-    }
-
-    # SPA static files
+    # それ以外は認証必須
     handle {
-        root * /opt/claude-trade/packages/web/dist
-        try_files {path} /index.html
-        file_server
+        forward_auth localhost:4180 {
+            uri /oauth2/auth
+            header_up X-Forwarded-For {remote_host}
+            copy_headers X-Auth-Request-User X-Auth-Request-Email
+
+            @unauthorized status 401
+            handle_response @unauthorized {
+                redir https://trade.aitaro.dev/oauth2/start?rd={uri}
+            }
+        }
+
+        handle /api/* {
+            uri strip_prefix /api
+            reverse_proxy localhost:3100
+        }
+
+        handle {
+            root * /opt/claude-trade/packages/web/dist
+            try_files {path} /index.html
+            file_server
+        }
     }
 
     log {

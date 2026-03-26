@@ -20,5 +20,9 @@ jobs:
             pnpm install --frozen-lockfile
             pnpm --filter web exec vite build
             pnpm exec drizzle-kit push
-            sudo systemctl restart claude-trade-api claude-trade-scheduler
+            sudo cp deploy/systemd/*.service /etc/systemd/system/
+            sudo cp deploy/Caddyfile /etc/caddy/Caddyfile
+            sudo systemctl daemon-reload
+            sudo systemctl restart claude-trade-api
+            sudo systemctl restart claude-trade-scheduler
             sudo systemctl reload caddy
