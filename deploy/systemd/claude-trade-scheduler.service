@@ -5,7 +5,7 @@ Wants=docker.service
 
 [Service]
 Type=simple
-User=claude-trade
+User=aitaro
 WorkingDirectory=/opt/claude-trade
 EnvironmentFile=/opt/claude-trade/.env
 Environment=PATH=/usr/local/bin:/usr/bin:/bin
