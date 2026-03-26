@@ -14,6 +14,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    logging:
+      driver: journald
+      options:
+        tag: postgres
     restart: unless-stopped
 
   ib-gateway:
@@ -21,6 +25,10 @@ services:
     entrypoint: ["/bin/sh", "/opt/ib-entrypoint.sh"]
     volumes:
       - ../scripts/ib-gateway-entrypoint.sh:/opt/ib-entrypoint.sh:ro
+    logging:
+      driver: journald
+      options:
+        tag: ib-gateway
     environment:
       TWS_USERID: ${TWS_USERID}
       TWS_PASSWORD: ${TWS_PASSWORD}

@@ -20,6 +20,7 @@ jobs:
             pnpm install --frozen-lockfile
             pnpm --filter web exec vite build
             pnpm exec drizzle-kit push
+            docker compose -f deploy/docker-compose.prod.yml --env-file .env up -d
             sudo cp deploy/systemd/*.service /etc/systemd/system/
             sudo cp deploy/Caddyfile /etc/caddy/Caddyfile
             sudo systemctl daemon-reload
