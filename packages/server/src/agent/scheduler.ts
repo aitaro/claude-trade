@@ -1,68 +1,78 @@
 /** スケジューラ: 全マーケットのジョブを1プロセスで管理する */
 
+import { execFileSync } from "node:child_process";
+import { resolve } from "node:path";
 import cron from "node-cron";
-import { execFileSync } from "child_process";
-import { resolve } from "path";
 import { PROJECT_ROOT, loadEnv } from "../config.js";
+import { createLogger } from "../lib/logger.js";
 import { isMarketOpen, isTradingDay } from "./market.js";
 import { MARKETS } from "./markets.js";
 import { runResearch } from "./runner.js";
+import { captureSnapshots } from "./snapshots.js";
 
 const env = loadEnv();
+const log = createLogger("scheduler");
 
 function runTradingEngine(marketIds: string[]): void {
   const openMarkets = marketIds.filter((m) => isMarketOpen(m));
   if (openMarkets.length === 0) {
-    console.log("[trading] No open markets. Skipping.");
+    log.info("No open markets. Skipping trading engine.");
     return;
   }
 
   const marketsStr = openMarkets.join(",");
-  console.log(`[trading] Starting trading engine for: ${marketsStr.toUpperCase()}`);
+  log.info({ markets: marketsStr }, "Starting trading engine");
 
   try {
-    const result = execFileSync("npx", [
-      "tsx",
-      resolve(PROJECT_ROOT, "packages/server/src/trading-engine/main.ts"),
-      "--market",
-      marketsStr,
-    ], {
-      cwd: PROJECT_ROOT,
-      timeout: 300000,
-      encoding: "utf-8",
-    });
-    console.log(`[trading] Completed:\n${result.slice(-500)}`);
+    const result = execFileSync(
+      "npx",
+      [
+        "tsx",
+        resolve(PROJECT_ROOT, "packages/server/src/trading-engine/main.ts"),
+        "--market",
+        marketsStr,
+      ],
+      {
+        cwd: PROJECT_ROOT,
+        timeout: 300000,
+        encoding: "utf-8",
+      },
+    );
+    log.info({ output: result.slice(-500) }, "Trading engine completed");
   } catch (e) {
-    console.error(`[trading] Failed:`, e);
+    log.error({ err: e }, "Trading engine failed");
   }
 }
 
 async function runResearchJob(mode: string, marketId: string): Promise<void> {
+  const jobLog = createLogger("scheduler", marketId.toUpperCase(), mode);
+
   if (mode === "premarket" && !isTradingDay(marketId)) {
-    console.log(`[${marketId.toUpperCase()}/${mode}] Not a trading day. Skipping.`);
+    jobLog.info("Not a trading day. Skipping.");
     return;
   }
 
   if (mode === "intraday" && !isMarketOpen(marketId)) {
-    console.log(`[${marketId.toUpperCase()}/${mode}] Market is closed. Skipping.`);
+    jobLog.info("Market is closed. Skipping.");
     return;
   }
 
-  console.log(`[${marketId.toUpperCase()}/${mode}] Starting research job`);
+  jobLog.info("Starting research job");
   try {
     const result = await runResearch(mode, marketId);
-    console.log(
-      `[${marketId.toUpperCase()}/${mode}] Completed. session=${result.sessionId} cost=$${result.totalCostUsd}`,
+    jobLog.info(
+      { sessionId: result.sessionId, cost: result.totalCostUsd },
+      "Research job completed",
     );
   } catch (e) {
-    console.error(`[${marketId.toUpperCase()}/${mode}] Research job failed:`, e);
+    jobLog.error({ err: e }, "Research job failed");
   }
 }
 
-async function runResearchThenTrade(
-  mode: string,
-  marketId: string,
-): Promise<void> {
+async function runResearchThenTrade(mode: string, marketId: string): Promise<void> {
+  // スナップショットを先に取得 (ポートフォリオ可視化用)
+  await captureSnapshots();
+
   await runResearchJob(mode, marketId);
   const enabled = env.ENABLED_MARKETS.split(",").map((m) => m.trim());
   runTradingEngine(enabled);
@@ -70,20 +80,12 @@ async function runResearchThenTrade(
 
 // Convert market local time cron to UTC-based cron for node-cron
 // node-cron doesn't support timezone natively, so we compute UTC offsets
-function toUtcCron(
-  hour: number | string,
-  minute: number,
-  tz: string,
-): string {
+function toUtcCron(hour: number | string, minute: number, tz: string): string {
   // Approximate: get current offset for the timezone
   const now = new Date();
-  const tzTime = new Date(
-    now.toLocaleString("en-US", { timeZone: tz }),
-  );
+  const tzTime = new Date(now.toLocaleString("en-US", { timeZone: tz }));
   const utcTime = new Date(now.toLocaleString("en-US", { timeZone: "UTC" }));
-  const offsetHours = Math.round(
-    (utcTime.getTime() - tzTime.getTime()) / 3600000,
-  );
+  const offsetHours = Math.round((utcTime.getTime() - tzTime.getTime()) / 3600000);
 
   if (typeof hour === "string" && hour.includes("-")) {
     // Range like "9-15"
@@ -110,37 +112,35 @@ export function startScheduler(): void {
   for (const marketId of enabled) {
     const mkt = MARKETS[marketId];
     if (!mkt) {
-      console.warn(`Unknown market: ${marketId}. Skipping.`);
+      log.warn({ marketId }, "Unknown market. Skipping.");
       continue;
     }
 
     // Premarket
-    const premarketCron = toUtcCron(
-      mkt.premarketHour,
-      mkt.premarketMinute,
-      mkt.timezone,
-    );
+    const premarketCron = toUtcCron(mkt.premarketHour, mkt.premarketMinute, mkt.timezone);
     cron.schedule(premarketCron, () => {
       runResearchJob("premarket", marketId);
     });
     jobs.push({ name: `Premarket Research (${mkt.name})`, schedule: premarketCron });
 
     // Intraday + Trading (every 10 min during market hours)
+    // closeMinute > 0 の場合、closeHour 台の closeMinute 前まで含める
     const intradayStart = mkt.openHour;
-    const intradayEnd = mkt.closeHour - 1;
-    for (const minute of [5, 15, 25, 35, 45, 55]) {
-      const intradayCron = toUtcCron(
-        `${intradayStart}-${intradayEnd}`,
-        minute,
-        mkt.timezone,
-      );
-      cron.schedule(intradayCron, () => {
-        runResearchThenTrade("intraday", marketId);
-      });
-      jobs.push({
-        name: `Intraday Research + Trading (${mkt.name})`,
-        schedule: intradayCron,
-      });
+    const intradayEndFull = mkt.closeMinute > 0 ? mkt.closeHour : mkt.closeHour - 1;
+    for (let h = intradayStart; h <= intradayEndFull; h++) {
+      for (const minute of [5, 15, 25, 35, 45, 55]) {
+        // closeHour 台では closeMinute より前のみ
+        if (h === mkt.closeHour && minute >= mkt.closeMinute) continue;
+
+        const intradayCron = toUtcCron(h, minute, mkt.timezone);
+        cron.schedule(intradayCron, () => {
+          runResearchThenTrade("intraday", marketId);
+        });
+        jobs.push({
+          name: `Intraday Research + Trading (${mkt.name})`,
+          schedule: intradayCron,
+        });
+      }
     }
 
     // EOD Review
@@ -151,22 +151,22 @@ export function startScheduler(): void {
     jobs.push({ name: `EOD Review (${mkt.name})`, schedule: eodCron });
   }
 
-  console.log(`Scheduler started with ${jobs.length} jobs:`);
+  log.info({ jobCount: jobs.length }, "Scheduler started");
   for (const job of jobs) {
-    console.log(`  - ${job.name}: ${job.schedule}`);
+    log.info({ job: job.name, cron: job.schedule }, "Registered job");
   }
 
   // --run-now
   if (runNow) {
     const { marketId, mode } = runNow;
-    console.log(`Immediate execution: ${marketId.toUpperCase()}/${mode}`);
+    log.info({ market: marketId.toUpperCase(), mode }, "Immediate execution");
     if (mode === "intraday") {
       runResearchThenTrade(mode, marketId).then(() => {
-        console.log("Immediate execution done. Continuing with scheduler...");
+        log.info("Immediate execution done. Continuing with scheduler...");
       });
     } else {
       runResearchJob(mode, marketId).then(() => {
-        console.log("Immediate execution done. Continuing with scheduler...");
+        log.info("Immediate execution done. Continuing with scheduler...");
       });
     }
   }

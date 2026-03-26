@@ -57,11 +57,13 @@ function buildScheduleJobs(mkt: MarketConfig): ScheduleJob[] {
     nextRunUtc: getNextRun(mkt.premarketHour, mkt.premarketMinute, mkt.timezone)?.toISOString() ?? null,
   });
 
-  // Intraday (every 30 min during market hours)
+  // Intraday (every 10 min during market hours)
+  // closeMinute > 0 の場合、closeHour 台の closeMinute 前まで含める
   const intradayStart = mkt.openHour;
-  const intradayEnd = mkt.closeHour - 1;
-  for (let h = intradayStart; h <= intradayEnd; h++) {
+  const intradayEndFull = mkt.closeMinute > 0 ? mkt.closeHour : mkt.closeHour - 1;
+  for (let h = intradayStart; h <= intradayEndFull; h++) {
     for (const m of [5, 15, 25, 35, 45, 55]) {
+      if (h === mkt.closeHour && m >= mkt.closeMinute) continue;
       jobs.push({
         name: `Intraday + Trading`,
         marketId: mkt.marketId,
