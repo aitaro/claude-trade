@@ -19,7 +19,6 @@ tasks:
   dev:stop:
     desc: "開発環境を停止"
     cmds:
-      - docker compose down
       - tmux kill-session -t {{.SESSION}} 2>/dev/null || true
 
   dev:restart:

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# 開発環境を tmux セッションで一括起動 (田の字レイアウト)
-# 人間が後から `tmux attach -t claude-trade` or `task dev:attach` で接続可能
+# 開発環境を tmux セッションで一括起動
+# GCE の PostgreSQL + IB Gateway に SSH トンネルで接続
 
 set -euo pipefail
 
@@ -15,54 +15,52 @@ if tmux has-session -t "$SESSION" 2>/dev/null; then
     exit 0
 fi
 
-# Docker インフラ起動
-echo "Starting Docker infrastructure..."
-docker compose up -d
-
-# postgres の healthcheck 待ち
-echo "Waiting for PostgreSQL..."
-until docker compose exec postgres pg_isready -U claude_trade > /dev/null 2>&1; do
-    sleep 1
-done
-echo "PostgreSQL ready."
-
 # ┌──────────────┬──────────────┐
-# │  Scheduler   │   API Server │
+# │  SSH Tunnel  │   API Server │
 # ├──────────────┼──────────────┤
-# │  Vite (Web)  │  Docker Logs │
+# │  Vite (Web)  │   Shell      │
 # └──────────────┴──────────────┘
 
-# セッション作成 → pane 0 (左上: Scheduler)
+# セッション作成 → pane 0 (左上: SSH Tunnel)
 tmux new-session -d -s "$SESSION" -n "dev" -x 200 -y 50
-tmux send-keys -t "$SESSION:dev" "cd $PROJECT_DIR && pnpm exec tsx --watch packages/server/src/agent/main.ts scheduler" Enter
+tmux send-keys -t "$SESSION:dev" "echo '==> SSH Tunnel to GCE (PostgreSQL:5432 + IB Gateway:4002)' && gcloud compute ssh claude-trade --project=aitaro-claude-trade --zone=europe-west2-a -- -L 5432:localhost:5432 -L 4002:localhost:4002 -N" Enter
 
 # 右に分割 → pane 1 (右上: API Server)
 tmux split-window -h -t "$SESSION:dev"
-tmux send-keys -t "$SESSION:dev" "cd $PROJECT_DIR && pnpm exec tsx --watch packages/server/src/api/server.ts" Enter
+tmux send-keys -t "$SESSION:dev" "sleep 3 && cd $PROJECT_DIR && pnpm exec tsx --watch packages/server/src/api/server.ts" Enter
 
-# 右上ペインを下に分割 → pane 2 (右下: Docker Logs)
+# 右上ペインを下に分割 → pane 2 (右下: Shell)
 tmux split-window -v -t "$SESSION:dev"
-tmux send-keys -t "$SESSION:dev" "cd $PROJECT_DIR && docker compose logs -f --tail=50" Enter
+tmux send-keys -t "$SESSION:dev" "cd $PROJECT_DIR" Enter
 
 # 左上ペイン (pane 0) を選択して下に分割 → pane 3 (左下: Vite)
 tmux select-pane -t "$SESSION:dev.0"
 tmux split-window -v -t "$SESSION:dev"
-tmux send-keys -t "$SESSION:dev" "cd $PROJECT_DIR/packages/web && pnpm exec vite" Enter
+tmux send-keys -t "$SESSION:dev" "sleep 3 && cd $PROJECT_DIR/packages/web && pnpm exec vite" Enter
 
-# 左上ペインにフォーカス
-tmux select-pane -t "$SESSION:dev.0"
+# ペインにタイトル表示
+tmux select-pane -t "$SESSION:dev.0" -T "SSH Tunnel"
+tmux select-pane -t "$SESSION:dev.1" -T "Vite :5173"
+tmux select-pane -t "$SESSION:dev.2" -T "API :3100"
+tmux select-pane -t "$SESSION:dev.3" -T "Shell"
+tmux set-option -t "$SESSION" pane-border-status top
+
+# 右下のシェルにフォーカス
+tmux select-pane -t "$SESSION:dev.3"
 
 echo ""
 echo "=== claude-trade dev environment started ==="
 echo ""
 echo "  ┌──────────────┬──────────────┐"
-echo "  │  Scheduler   │  API :3100   │"
+echo "  │  SSH Tunnel  │  API :3100   │"
 echo "  ├──────────────┼──────────────┤"
-echo "  │  Vite :5173  │  Docker Logs │"
+echo "  │  Vite :5173  │  Shell       │"
 echo "  └──────────────┴──────────────┘"
 echo ""
 echo "  Dashboard: http://localhost:5173"
-echo "  pgweb:     http://localhost:8081"
+echo "  DB/IB: via SSH tunnel to GCE"
+echo ""
+echo "  task research -- intraday --market us"
 echo ""
 
 # アタッチ
