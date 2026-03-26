@@ -17,7 +17,7 @@ jobs:
           script: |
             cd /opt/claude-trade
             git pull origin main
-            pnpm install --frozen-lockfile
+            CI=true NODE_ENV=development pnpm install --frozen-lockfile
             pnpm --filter web exec vite build
             pnpm exec vitepress build docs
             pnpm exec drizzle-kit push
