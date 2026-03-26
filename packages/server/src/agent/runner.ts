@@ -101,6 +101,8 @@ export async function runResearch(
     const conversation = query({
       prompt,
       options: {
+        appendSystemPrompt:
+          "あなたは Claude Trade のリサーチエージェントです。すべての出力（レポート、シグナルの reasoning、分析コメント）は日本語で記述してください。銘柄コード・数値・英語の固有名詞はそのまま英語で構いません。",
         allowedTools: ["mcp__claude-trade__*", "WebSearch", "WebFetch"],
         mcpServers: buildMcpServers(),
         model: env.MODEL,
