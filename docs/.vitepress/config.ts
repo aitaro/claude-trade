@@ -14,6 +14,7 @@ export default withMermaid(
           text: "System",
           items: [
             { text: "Architecture", link: "/system/architecture" },
+            { text: "Data Sources", link: "/system/data-sources" },
             { text: "Database", link: "/system/database" },
             { text: "Markets", link: "/system/markets" },
             { text: "Safety", link: "/system/safety" },
