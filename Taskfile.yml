@@ -122,6 +122,23 @@ tasks:
     cmds:
       - npx vite build
 
+  # ── GCE ──
+
+  gce:log:
+    desc: "GCE ログをtmux 4ペインで表示"
+    cmds:
+      - scripts/gce-logs.sh
+
+  gce:ssh:
+    desc: "GCE に SSH"
+    cmds:
+      - gcloud compute ssh claude-trade --project=aitaro-claude-trade --zone=europe-west2-a
+
+  gce:status:
+    desc: "GCE サービス状態確認"
+    cmds:
+      - gcloud compute ssh claude-trade --project=aitaro-claude-trade --zone=europe-west2-a --command='sudo systemctl status claude-trade-api claude-trade-scheduler oauth2-proxy caddy --no-pager'
+
   # ── Lint & Build ──
 
   lint:
