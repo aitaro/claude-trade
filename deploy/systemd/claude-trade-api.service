@@ -1,0 +1,19 @@
+[Unit]
+Description=Claude Trade tRPC API Server
+After=network.target docker.service
+Wants=docker.service
+
+[Service]
+Type=simple
+User=claude-trade
+WorkingDirectory=/opt/claude-trade
+EnvironmentFile=/opt/claude-trade/.env
+ExecStart=/usr/bin/node --import tsx packages/server/src/api/server.ts
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=claude-trade-api
+
+[Install]
+WantedBy=multi-user.target

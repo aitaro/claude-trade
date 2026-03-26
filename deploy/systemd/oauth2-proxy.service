@@ -1,0 +1,15 @@
+[Unit]
+Description=OAuth2 Proxy
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/oauth2-proxy --config=/opt/claude-trade/deploy/oauth2-proxy.cfg
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=oauth2-proxy
+
+[Install]
+WantedBy=multi-user.target

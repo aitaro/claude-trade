@@ -1,0 +1,20 @@
+[Unit]
+Description=Claude Trade Agent Scheduler
+After=network.target docker.service claude-trade-api.service
+Wants=docker.service
+
+[Service]
+Type=simple
+User=claude-trade
+WorkingDirectory=/opt/claude-trade
+EnvironmentFile=/opt/claude-trade/.env
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+ExecStart=/usr/bin/node --import tsx packages/server/src/agent/main.ts scheduler
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=claude-trade-scheduler
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,2 @@
+# Add allowed Google accounts (one per line)
+# example@gmail.com
