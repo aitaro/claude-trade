@@ -1,15 +1,16 @@
 /** Claude Code SDK を使って Research Agent を実行する */
 
-import { readFileSync } from "fs";
-import { resolve } from "path";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import {
-  query,
-  type SDKMessage,
-  type SDKAssistantMessage,
-  type SDKResultMessage,
   type McpStdioServerConfig,
+  type SDKAssistantMessage,
+  type SDKMessage,
+  type SDKResultMessage,
+  query,
 } from "@anthropic-ai/claude-code";
 import { PROJECT_ROOT, loadEnv } from "../config.js";
+import { createLogger } from "../lib/logger.js";
 import { MARKETS } from "./markets.js";
 
 const env = loadEnv();
@@ -44,10 +45,7 @@ function loadPrompt(mode: string, market = "us"): string {
   const mkt = MARKETS[market];
   if (!mkt) throw new Error(`Unknown market: ${market}`);
 
-  const strategyContent = readFileSync(
-    resolve(STRATEGIES_DIR, mkt.strategyFile),
-    "utf-8",
-  );
+  const strategyContent = readFileSync(resolve(STRATEGIES_DIR, mkt.strategyFile), "utf-8");
 
   const marketContext = `
 
@@ -91,8 +89,9 @@ export async function runResearch(
   result: string;
   totalCostUsd: number | null;
 }> {
+  const log = createLogger("research", market.toUpperCase(), mode);
   const prompt = loadPrompt(mode, market);
-  console.log(`Starting ${mode} research for ${market.toUpperCase()} market`);
+  log.info("Starting research");
 
   let resultText = "";
   let sessionId = "";
@@ -120,7 +119,7 @@ export async function runResearch(
         if (assistantMsg.message?.content) {
           for (const block of assistantMsg.message.content) {
             if (block.type === "text" && "text" in block) {
-              console.log(`[${market.toUpperCase()}/${mode}] ${(block as { text: string }).text.slice(0, 200)}`);
+              log.info((block as { text: string }).text.slice(0, 200));
             }
           }
         }
@@ -131,13 +130,18 @@ export async function runResearch(
         }
         sessionId = resultMsg.session_id;
         totalCost = resultMsg.total_cost_usd;
-        console.log(
-          `[${market.toUpperCase()}/${mode}] Completed: turns=${resultMsg.num_turns}, cost=$${resultMsg.total_cost_usd}, duration=${resultMsg.duration_ms}ms`,
+        log.info(
+          {
+            turns: resultMsg.num_turns,
+            cost: resultMsg.total_cost_usd,
+            durationMs: resultMsg.duration_ms,
+          },
+          "Research completed",
         );
       }
     }
   } catch (e) {
-    console.error(`[${market.toUpperCase()}/${mode}] SDK error during research:`, e);
+    log.error({ err: e }, "SDK error during research");
   }
 
   return {

@@ -1,7 +1,10 @@
-import http from "http";
+import http from "node:http";
 import { createHTTPHandler } from "@trpc/server/adapters/standalone";
 import cors from "cors";
+import { createLogger } from "../lib/logger.js";
 import { appRouter } from "./router.js";
+
+const log = createLogger("api");
 
 const handler = createHTTPHandler({
   router: appRouter,
@@ -17,5 +20,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`[API] tRPC server listening on http://localhost:${PORT}`);
+  log.info({ port: PORT }, "tRPC server listening");
 });

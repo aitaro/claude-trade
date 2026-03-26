@@ -1,8 +1,11 @@
 /** Agent Runner エントリーポイント */
 
-import { parseArgs } from "util";
+import { parseArgs } from "node:util";
+import { createLogger } from "../lib/logger.js";
 import { runResearch } from "./runner.js";
-import { startScheduler, setRunNow } from "./scheduler.js";
+import { setRunNow, startScheduler } from "./scheduler.js";
+
+const log = createLogger("agent");
 
 const { positionals, values } = parseArgs({
   options: {
@@ -19,20 +22,17 @@ if (command === "run") {
   const market = values.market ?? "us";
 
   if (!["premarket", "intraday", "eod"].includes(mode)) {
-    console.error(`Unknown mode: ${mode}. Use: premarket, intraday, eod`);
+    log.error({ mode }, "Unknown mode. Use: premarket, intraday, eod");
     process.exit(1);
   }
 
   runResearch(mode, market)
     .then((result) => {
-      console.log(`Session: ${result.sessionId}`);
-      if (result.totalCostUsd) {
-        console.log(`Cost: $${result.totalCostUsd.toFixed(4)}`);
-      }
+      log.info({ sessionId: result.sessionId, cost: result.totalCostUsd }, "Research complete");
       process.exit(0);
     })
     .catch((e) => {
-      console.error("Research agent failed:", e);
+      log.error({ err: e }, "Research agent failed");
       process.exit(1);
     });
 } else if (command === "scheduler") {
@@ -40,17 +40,17 @@ if (command === "run") {
   if (runNowArg) {
     const parts = runNowArg.split("/");
     if (parts.length !== 2) {
-      console.error("--run-now format: MARKET/MODE (e.g., us/intraday)");
+      log.error("--run-now format: MARKET/MODE (e.g., us/intraday)");
       process.exit(1);
     }
     setRunNow(parts[0], parts[1]);
   }
 
-  console.log("Starting agent scheduler...");
+  log.info("Starting agent scheduler...");
   startScheduler();
 } else {
-  console.error("Usage:");
-  console.error("  npx tsx src/agent/main.ts run [premarket|intraday|eod] --market [us|jp|eu|uk]");
-  console.error("  npx tsx src/agent/main.ts scheduler [--run-now MARKET/MODE]");
+  log.error("Usage:");
+  log.error("  npx tsx src/agent/main.ts run [premarket|intraday|eod] --market [us|jp|eu|uk]");
+  log.error("  npx tsx src/agent/main.ts scheduler [--run-now MARKET/MODE]");
   process.exit(1);
 }

@@ -1,9 +1,12 @@
 import { sql } from "drizzle-orm";
+import { createLogger } from "../lib/logger.js";
 import { db, pool } from "./client.js";
 import * as schema from "./schema.js";
 
+const log = createLogger("migrate");
+
 async function migrate() {
-  console.log("Running migrations...");
+  log.info("Running migrations...");
 
   // create_all equivalent: create tables if not exist using Drizzle push
   // For simplicity, we use raw SQL to create tables based on schema
@@ -30,20 +33,15 @@ async function migrate() {
   // Use drizzle-kit push for schema sync (programmatic)
   // For now, we just verify connection
   const result = await db.execute(sql`SELECT 1 as ok`);
-  console.log("DB connection OK:", result.rows[0]);
+  log.info({ result: result.rows[0] }, "DB connection OK");
 
-  console.log(
-    "Tables defined:",
-    tables.map((t) => t._.name),
-  );
-  console.log(
-    "\nTo sync schema, run: npx drizzle-kit push",
-  );
+  log.info({ tables: tables.map((t) => t._.name) }, "Tables defined");
+  log.info("To sync schema, run: npx drizzle-kit push");
 
   await pool.end();
 }
 
 migrate().catch((err) => {
-  console.error("Migration failed:", err);
+  log.error({ err }, "Migration failed");
   process.exit(1);
 });

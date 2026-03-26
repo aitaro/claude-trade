@@ -1,15 +1,15 @@
 /** 緊急停止 (Kill Switch) */
 
 import { eq } from "drizzle-orm";
+import { loadEnv } from "../config.js";
 import { db } from "../db/client.js";
 import { riskState } from "../db/schema.js";
-import { loadEnv } from "../config.js";
+import { createLogger } from "../lib/logger.js";
+
+const log = createLogger("kill-switch");
 
 export async function activateKillSwitch(reason: string): Promise<void> {
-  const [existing] = await db
-    .select()
-    .from(riskState)
-    .where(eq(riskState.id, 1));
+  const [existing] = await db.select().from(riskState).where(eq(riskState.id, 1));
 
   if (!existing) {
     await db.insert(riskState).values({
@@ -31,7 +31,7 @@ export async function activateKillSwitch(reason: string): Promise<void> {
       .where(eq(riskState.id, 1));
   }
 
-  console.log(`[KILL SWITCH] Activated: ${reason}`);
+  log.error({ reason }, "Kill switch ACTIVATED");
 }
 
 export async function deactivateKillSwitch(): Promise<void> {
@@ -45,13 +45,10 @@ export async function deactivateKillSwitch(): Promise<void> {
     })
     .where(eq(riskState.id, 1));
 
-  console.log("[KILL SWITCH] Deactivated");
+  log.info("Kill switch deactivated");
 }
 
-export async function checkDailyLoss(
-  currentNav: number,
-  startingNav: number,
-): Promise<boolean> {
+export async function checkDailyLoss(currentNav: number, startingNav: number): Promise<boolean> {
   if (startingNav <= 0) return false;
 
   const env = loadEnv();
