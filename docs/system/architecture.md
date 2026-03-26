@@ -4,28 +4,39 @@
 
 ```mermaid
 graph TB
+    SCHED[Scheduler<br/>node-cron]
+
     subgraph "Stage 1: Research Agent"
-        SCHED[Scheduler<br/>node-cron] -->|起動| SDK[Claude Code SDK]
+        SDK[Claude Code SDK]
         SDK -->|query| CLAUDE[Claude AI]
         CLAUDE -->|MCP tools| MCP[MCP Server<br/>fastmcp]
-        MCP -->|market data| IB[IB Gateway]
-        MCP -->|read/write| DB[(PostgreSQL)]
         CLAUDE -->|WebSearch| WEB[Web]
     end
 
     subgraph "Stage 2: Trading Engine"
-        SCHED -->|起動| TE[Trading Engine]
-        TE -->|read signals| DB
+        TE[Trading Engine]
         TE -->|risk check| RISK[Risk Engine]
-        TE -->|execute| IB
-        TE -->|audit| DB
     end
 
     subgraph "Stage 3: EOD Review"
-        SCHED -->|起動| SDK2[Claude Code SDK]
+        SDK2[Claude Code SDK]
         SDK2 -->|query| CLAUDE2[Claude AI]
         CLAUDE2 -->|evaluate & learn| MCP
     end
+
+    subgraph Infrastructure
+        DB[(PostgreSQL)]
+        IB[IB Gateway]
+    end
+
+    SCHED -->|起動| SDK
+    SCHED -->|起動| TE
+    SCHED -->|起動| SDK2
+    MCP -->|market data| IB
+    MCP -->|read/write| DB
+    TE -->|read signals| DB
+    TE -->|execute| IB
+    TE -->|audit| DB
 
     style CLAUDE fill:#f9a825,color:#000
     style CLAUDE2 fill:#f9a825,color:#000
