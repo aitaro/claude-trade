@@ -123,6 +123,13 @@ tasks:
 
   # ── GCE ──
 
+  gce:run:
+    desc: "GCE で Research Agent を1回だけ実行 (例: task gce:run -- intraday --market us)"
+    vars:
+      ARGS: '{{.CLI_ARGS | default "intraday --market us"}}'
+    cmds:
+      - gcloud compute ssh claude-trade --project=aitaro-claude-trade --zone=europe-west2-a --command='cd /opt/claude-trade && export $(grep -v "^#" .env | xargs) && /usr/bin/node --import tsx packages/server/src/agent/main.ts run {{.ARGS}}'
+
   gce:log:
     desc: "GCE ログをtmux 4ペインで表示"
     cmds:

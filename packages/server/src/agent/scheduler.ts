@@ -154,12 +154,12 @@ export function startScheduler(): void {
     });
     jobs.push({ name: `Premarket Research (${mkt.name})`, schedule: premarketCron });
 
-    // Intraday + Trading (every 10 min during market hours)
+    // Intraday + Trading (every 30 min during market hours)
     // closeMinute > 0 の場合、closeHour 台の closeMinute 前まで含める
     const intradayStart = mkt.openHour;
     const intradayEndFull = mkt.closeMinute > 0 ? mkt.closeHour : mkt.closeHour - 1;
     for (let h = intradayStart; h <= intradayEndFull; h++) {
-      for (const minute of [5, 15, 25, 35, 45, 55]) {
+      for (const minute of [5, 35]) {
         // closeHour 台では closeMinute より前のみ
         if (h === mkt.closeHour && minute >= mkt.closeMinute) continue;
 
