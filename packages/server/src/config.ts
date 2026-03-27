@@ -33,7 +33,7 @@ export function loadEnv() {
     LIVE_TRADING_ENABLED: process.env.LIVE_TRADING_ENABLED === "true",
 
     // Claude
-    MODEL: process.env.MODEL || "claude-sonnet-4-6",
+    MODEL: "claude-sonnet-4-6",
     MAX_TURNS: Number(process.env.MAX_TURNS || "50"),
     ENABLED_MARKETS: process.env.ENABLED_MARKETS || "us,jp,eu,uk",
   };
