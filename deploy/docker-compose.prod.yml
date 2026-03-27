@@ -25,6 +25,11 @@ services:
     entrypoint: ["/bin/sh", "/opt/ib-entrypoint.sh"]
     volumes:
       - ../scripts/ib-gateway-entrypoint.sh:/opt/ib-entrypoint.sh:ro
+      # IBC autorestart ファイルを永続化: コンテナ再起動後も 2FA スキップでログイン可能
+      # 成功ログイン後に <Jts>/<username>/autorestart ファイルが生成される
+      # このファイルが存在すると IBC は 2FA なしで既存セッションとして再接続する
+      # 公式設計: 週1回（土曜夜リセット後）の手動ログイン → 月〜土は自動再起動
+      - ibjts:/home/ibgateway/Jts
     logging:
       driver: journald
       options:
@@ -43,8 +48,11 @@ services:
       # → 再起動後に前セッション（同じ自分）と競合してループするため primaryoverride を使う
       EXISTING_SESSION_DETECTED_ACTION: primaryoverride
       IB_RESTART_DELAY: "180"
+      # VNC: 週次手動ログイン用 (IB Key Challenge-Response を GUI で完了するため)
+      VNC_SERVER_PASSWORD: ${VNC_SERVER_PASSWORD}
     network_mode: host
     restart: unless-stopped
 
 volumes:
   pgdata:
+  ibjts:

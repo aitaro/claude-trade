@@ -30,3 +30,4 @@ backups/
 # Logs
 *.log
 logs/
+docs/credentials.md
