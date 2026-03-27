@@ -36,9 +36,12 @@ services:
       TWS_ACCEPT_INCOMING: "true"
       TWOFA_TIMEOUT_ACTION: restart
       READ_ONLY_API: "no"
-      # primary = 他セッションが来ても自分は死なない（Gateway 常駐向け）
-      # primaryoverride = 他セッションが来たら自分が退く（逆なので注意！名前に騙されるな）
-      EXISTING_SESSION_DETECTED_ACTION: primary
+      # 既存セッション検出時の動作 (IBC userguide: https://github.com/IbcAlpha/IBC/blob/master/userguide.md)
+      # primary         = 自分が残り、相手に退くよう要求。相手も primary だと膠着（デッドロック）
+      # primaryoverride = 問答無用で自分が乗っ取る。再起動ループ時に前セッションを強制排除できる
+      # secondary       = 既存セッションがあれば自分が退く
+      # → 再起動後に前セッション（同じ自分）と競合してループするため primaryoverride を使う
+      EXISTING_SESSION_DETECTED_ACTION: primaryoverride
       IB_RESTART_DELAY: "180"
     network_mode: host
     restart: unless-stopped
