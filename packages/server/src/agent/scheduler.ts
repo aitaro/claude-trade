@@ -13,6 +13,35 @@ import { captureSnapshots } from "./snapshots.js";
 const env = loadEnv();
 const log = createLogger("scheduler");
 
+// IB Gateway は同時に1つの API 接続しか安定して扱えない。
+// 複数市場の Research が同時に MCP 経由で IB に接続すると
+// セッション競合で Gateway が落ちる。直列実行で排他制御する。
+let researchLock = false;
+const researchQueue: Array<() => Promise<void>> = [];
+
+async function enqueueResearch(fn: () => Promise<void>): Promise<void> {
+  if (researchLock) {
+    log.info("Research already running. Queuing...");
+    return new Promise<void>((resolve) => {
+      researchQueue.push(async () => {
+        await fn();
+        resolve();
+      });
+    });
+  }
+
+  researchLock = true;
+  try {
+    await fn();
+  } finally {
+    researchLock = false;
+    const next = researchQueue.shift();
+    if (next) {
+      enqueueResearch(next);
+    }
+  }
+}
+
 function runTradingEngine(marketIds: string[]): void {
   const openMarkets = marketIds.filter((m) => isMarketOpen(m));
   if (openMarkets.length === 0) {
@@ -70,12 +99,14 @@ async function runResearchJob(mode: string, marketId: string): Promise<void> {
 }
 
 async function runResearchThenTrade(mode: string, marketId: string): Promise<void> {
-  // スナップショットを先に取得 (ポートフォリオ可視化用)
-  await captureSnapshots();
+  await enqueueResearch(async () => {
+    // スナップショットを先に取得 (ポートフォリオ可視化用)
+    await captureSnapshots();
 
-  await runResearchJob(mode, marketId);
-  const enabled = env.ENABLED_MARKETS.split(",").map((m) => m.trim());
-  runTradingEngine(enabled);
+    await runResearchJob(mode, marketId);
+    const enabled = env.ENABLED_MARKETS.split(",").map((m) => m.trim());
+    runTradingEngine(enabled);
+  });
 }
 
 // Convert market local time cron to UTC-based cron for node-cron
