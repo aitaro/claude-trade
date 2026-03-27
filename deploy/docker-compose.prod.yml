@@ -36,7 +36,9 @@ services:
       TWS_ACCEPT_INCOMING: "true"
       TWOFA_TIMEOUT_ACTION: restart
       READ_ONLY_API: "no"
-      EXISTING_SESSION_DETECTED_ACTION: primaryoverride
+      # primary = 他セッションが来ても自分は死なない（Gateway 常駐向け）
+      # primaryoverride = 他セッションが来たら自分が退く（逆なので注意！名前に騙されるな）
+      EXISTING_SESSION_DETECTED_ACTION: primary
       IB_RESTART_DELAY: "180"
     network_mode: host
     restart: unless-stopped

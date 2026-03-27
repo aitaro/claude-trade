@@ -11,6 +11,16 @@
 - 日付処理は date-fns を使う。`toLocaleString()` は使わない
 - フロントの日付フォーマットは `packages/web/src/lib/format.ts` に集約
 
+## Issue + PR 駆動開発
+
+すべての変更は GitHub Issue → ブランチ → PR の流れで行う。
+
+- **Issue が先**: コードを書く前に Issue が存在すること。なければ先に作る
+- **ブランチ名**: `fix/12-ib-gateway-session` のように `<type>/<issue番号>-<slug>` 形式
+- **PR は Issue に紐付ける**: PR の body に `Closes #12` を含めて自動クローズ
+- **PR タイトル**: Issue タイトルをベースに簡潔に。70文字以内
+- **GitHub Project**: Issue は `Claude Trade Roadmap` プロジェクトで Priority 管理
+
 ## アーキテクチャ
 
 三段構成のトレーディングプラットフォーム:
