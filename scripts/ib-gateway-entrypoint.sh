@@ -8,7 +8,7 @@
 # 0 = 無期限待機: IBC の内部タイマーが発火しないため Attempt 2 が起動しない
 TMPL="/home/ibgateway/ibc/config.ini.tmpl"
 if [ -f "$TMPL" ]; then
-    sed -i 's/^SecondFactorAuthenticationTimeout=180$/SecondFactorAuthenticationTimeout=0/' "$TMPL"
+    sed -i 's/^SecondFactorAuthenticationTimeout=180/SecondFactorAuthenticationTimeout=0/' "$TMPL"
     echo "[ib-gateway] Patched SecondFactorAuthenticationTimeout=0 in config.ini.tmpl"
 fi
 
