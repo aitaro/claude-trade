@@ -15,6 +15,13 @@ if [ -f "$TMPL" ]; then
     echo "[ib-gateway] Patched config.ini.tmpl: SecondFactorAuthenticationTimeout=86400, SecondFactorDevice=IBKR Mobile"
 fi
 
+# "Existing session detected" ダイアログの自動 Reconnect スクリプトを起動
+# IBC が scenario 6 で Cancel を選ぶバグを回避: xdotool で Reconnect ボタンを自動クリック
+if [ -f /opt/auto-reconnect.sh ]; then
+    sh /opt/auto-reconnect.sh &
+    echo "[ib-gateway] Started auto-reconnect monitor (PID $!)"
+fi
+
 # run.sh を実行 (VNC + Xvfb + IBC を起動)
 # exec しない: run.sh 終了後もコンテナを維持するため
 /home/ibgateway/scripts/run.sh "$@"

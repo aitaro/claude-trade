@@ -21,14 +21,14 @@ services:
     restart: unless-stopped
 
   ib-gateway:
-    image: ghcr.io/gnzsnz/ib-gateway:stable
+    build:
+      context: .
+      dockerfile: Dockerfile.ib-gateway
+    image: claude-trade/ib-gateway:latest
     entrypoint: ["/bin/sh", "/opt/ib-entrypoint.sh"]
     volumes:
       - ../scripts/ib-gateway-entrypoint.sh:/opt/ib-entrypoint.sh:ro
-      # IBC autorestart ファイルを永続化: コンテナ再起動後も 2FA スキップでログイン可能
-      # 成功ログイン後に <Jts>/<username>/autorestart ファイルが生成される
-      # このファイルが存在すると IBC は 2FA なしで既存セッションとして再接続する
-      # 公式設計: 週1回（土曜夜リセット後）の手動ログイン → 月〜土は自動再起動
+      - ../scripts/auto-reconnect.sh:/opt/auto-reconnect.sh:ro
       - ibjts:/home/ibgateway/Jts
     logging:
       driver: journald
