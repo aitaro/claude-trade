@@ -8,10 +8,10 @@
 # 0 = 無期限待機: IBC の内部タイマーが発火しないため Attempt 2 が起動しない
 TMPL="/home/ibgateway/ibc/config.ini.tmpl"
 if [ -f "$TMPL" ]; then
-    sed -i 's/^SecondFactorAuthenticationTimeout=180/SecondFactorAuthenticationTimeout=86400/' "$TMPL"
+    sed -i 's/^SecondFactorAuthenticationTimeout=[0-9]*/SecondFactorAuthenticationTimeout=86400/' "$TMPL"
     # IB Key (IBKR Mobile) を 2FA デバイスとして指定
     # これがないと IBC が 2FA ダイアログを認識せず、サーバー側で 2FA 未完了のまま 180 秒で切断される
-    sed -i 's/^SecondFactorDevice=/SecondFactorDevice=IBKR Mobile/' "$TMPL"
+    sed -i 's/^SecondFactorDevice=.*/SecondFactorDevice=IBKR Mobile/' "$TMPL"
     echo "[ib-gateway] Patched config.ini.tmpl: SecondFactorAuthenticationTimeout=86400, SecondFactorDevice=IBKR Mobile"
 fi
 
