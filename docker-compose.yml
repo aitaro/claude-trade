@@ -32,7 +32,7 @@ services:
       TWS_ACCEPT_INCOMING: "true"
       TWOFA_TIMEOUT_ACTION: restart
       READ_ONLY_API: "no"
-      EXISTING_SESSION_DETECTED_ACTION: primaryoverride
+      EXISTING_SESSION_DETECTED_ACTION: manual
       IB_RESTART_DELAY: "180"
       VNC_SERVER_PASSWORD: ${VNC_SERVER_PASSWORD:-}
     network_mode: host

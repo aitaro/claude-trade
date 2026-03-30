@@ -26,5 +26,5 @@ while true; do
         sleep 5
     fi
 
-    sleep 2
+    sleep 1
 done
