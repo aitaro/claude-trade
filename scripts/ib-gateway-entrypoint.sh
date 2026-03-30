@@ -1,6 +1,7 @@
 #!/bin/sh
 # IB Gateway のラッパー
-# - 再起動時は VNC を維持したまま待機（手動ログインの時間を確保）
+# - IBC 終了後もコンテナを維持 (VNC でアクセス可能にする)
+# - 再起動間隔を確保してセッション衝突ループを防ぐ
 # - IBC config.ini.tmpl をパッチ
 
 # config.ini.tmpl の SecondFactorAuthenticationTimeout を 0 にパッチ
@@ -11,4 +12,20 @@ if [ -f "$TMPL" ]; then
     echo "[ib-gateway] Patched SecondFactorAuthenticationTimeout=0 in config.ini.tmpl"
 fi
 
-exec /home/ibgateway/scripts/run.sh "$@"
+# run.sh を実行 (VNC + Xvfb + IBC を起動)
+# exec しない: run.sh 終了後もコンテナを維持するため
+/home/ibgateway/scripts/run.sh "$@"
+EXIT_CODE=$?
+
+echo "[ib-gateway] run.sh exited with code $EXIT_CODE"
+
+# IBC が終了しても VNC を維持して手動ログインを可能にする
+# Docker の restart policy がコンテナを再起動するまでの間、
+# セッションがサーバー上から消えるのを待つ (300秒)
+WAIT_SECONDS="${IB_RESTART_DELAY:-300}"
+echo "[ib-gateway] Waiting ${WAIT_SECONDS}s for stale sessions to clear before exit..."
+echo "[ib-gateway] VNC is still accessible for manual intervention."
+sleep "$WAIT_SECONDS"
+
+echo "[ib-gateway] Exiting. Docker will restart the container."
+exit $EXIT_CODE
