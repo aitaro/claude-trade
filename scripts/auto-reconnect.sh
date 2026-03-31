@@ -12,18 +12,43 @@ while true; do
     WIN_ID=$(xdotool search --name "Existing session detected" 2>/dev/null | head -1)
 
     if [ -n "$WIN_ID" ]; then
-        echo "[auto-reconnect] $(date -u) Detected 'Existing session detected' dialog (window $WIN_ID)"
-        sleep 1
+        echo "[auto-reconnect] $(date -u) Detected dialog (window $WIN_ID)"
 
-        # ダイアログをアクティブにして "Reconnect This Session" ボタンをクリック
-        # ボタンはダイアログ左下にある。Tab + Enter で最初のボタン (Reconnect) を押す
-        xdotool windowactivate "$WIN_ID" 2>/dev/null
-        sleep 0.5
-        # Reconnect ボタンにフォーカスがあるはずなので Enter を押す
-        xdotool key --window "$WIN_ID" Return 2>/dev/null
+        # ダイアログをフォーカスし、Reconnect ボタンをクリック
+        # "Reconnect This Session" は左側のボタン。ダイアログの左下付近をクリック。
+        # ダイアログサイズを取得してボタン位置を推定
+        xdotool windowactivate --sync "$WIN_ID" 2>/dev/null
+        sleep 0.3
 
-        echo "[auto-reconnect] $(date -u) Clicked Reconnect button"
+        # ウィンドウのジオメトリを取得
+        GEOM=$(xdotool getwindowgeometry "$WIN_ID" 2>/dev/null)
+        WIN_X=$(echo "$GEOM" | grep "Position" | sed 's/.*Position: \([0-9]*\),.*/\1/')
+        WIN_Y=$(echo "$GEOM" | grep "Position" | sed 's/.*,\([0-9]*\) .*/\1/')
+        WIN_W=$(echo "$GEOM" | grep "Geometry" | sed 's/.*Geometry: \([0-9]*\)x.*/\1/')
+        WIN_H=$(echo "$GEOM" | grep "Geometry" | sed 's/.*x\([0-9]*\)/\1/')
+
+        if [ -n "$WIN_W" ] && [ -n "$WIN_H" ]; then
+            # Reconnect ボタンは左下 (幅の1/3, 高さの85%あたり)
+            BTN_X=$((WIN_X + WIN_W / 3))
+            BTN_Y=$((WIN_Y + WIN_H * 85 / 100))
+            echo "[auto-reconnect] $(date -u) Clicking at ($BTN_X, $BTN_Y) [window ${WIN_W}x${WIN_H} at ${WIN_X},${WIN_Y}]"
+            xdotool mousemove "$BTN_X" "$BTN_Y" click 1 2>/dev/null
+        else
+            # フォールバック: Tab で Reconnect ボタンにフォーカスして Enter
+            echo "[auto-reconnect] $(date -u) Fallback: Tab+Enter"
+            xdotool key --window "$WIN_ID" Tab Return 2>/dev/null
+        fi
+
         sleep 5
+
+        # ダイアログがまだ残っていたらもう一度試す (別の方法)
+        STILL=$(xdotool search --name "Existing session detected" 2>/dev/null | head -1)
+        if [ -n "$STILL" ]; then
+            echo "[auto-reconnect] $(date -u) Dialog still open, trying Enter key"
+            xdotool windowactivate --sync "$STILL" 2>/dev/null
+            xdotool key --window "$STILL" Return 2>/dev/null
+            sleep 3
+        fi
     fi
 
     sleep 1
