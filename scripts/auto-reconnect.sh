@@ -1,7 +1,7 @@
 #!/bin/sh
-# IB Gateway の "Existing session detected" ダイアログを自動で "Reconnect This Session" する
-# IBC が scenario 6 で Cancel を選んでしまう問題を回避するため、
-# xdotool でダイアログを検知して Reconnect ボタンをクリックする
+# IB Gateway の "Existing session detected" ダイアログを自動で "Continue Login" する
+# IBC の ExistingSessionDetectedAction=manual と組み合わせて使用
+# xdotool でダイアログを検知して Continue Login ボタンをクリックする
 
 export DISPLAY=:1
 
@@ -14,13 +14,13 @@ while true; do
     if [ -n "$WIN_ID" ]; then
         echo "[auto-reconnect] $(date -u) Detected dialog (window $WIN_ID)"
 
-        # ダイアログをフォーカスし、Reconnect ボタンをクリック
-        # "Reconnect This Session" は左側のボタン。ダイアログの左下付近をクリック。
-        # ダイアログサイズを取得してボタン位置を推定
-        xdotool windowactivate --sync "$WIN_ID" 2>/dev/null
+        # "Continue Login" ボタンをクリック
+        # Xvfb は 1024x768。ダイアログ内のボタン位置を windowfocus + mousemove で直接クリック
+        # ウィンドウマネージャがないので windowactivate は使えない
+        xdotool windowfocus "$WIN_ID" 2>/dev/null
         sleep 0.3
 
-        # ウィンドウのジオメトリを取得
+        # ウィンドウのジオメトリから Continue Login ボタンの絶対座標を計算
         GEOM=$(xdotool getwindowgeometry "$WIN_ID" 2>/dev/null)
         WIN_X=$(echo "$GEOM" | grep "Position" | sed 's/.*Position: \([0-9]*\),.*/\1/')
         WIN_Y=$(echo "$GEOM" | grep "Position" | sed 's/.*,\([0-9]*\) .*/\1/')
@@ -28,27 +28,40 @@ while true; do
         WIN_H=$(echo "$GEOM" | grep "Geometry" | sed 's/.*x\([0-9]*\)/\1/')
 
         if [ -n "$WIN_W" ] && [ -n "$WIN_H" ]; then
-            # Reconnect ボタンは左下 (幅の1/3, 高さの85%あたり)
-            BTN_X=$((WIN_X + WIN_W / 3))
-            BTN_Y=$((WIN_Y + WIN_H * 85 / 100))
-            echo "[auto-reconnect] $(date -u) Clicking at ($BTN_X, $BTN_Y) [window ${WIN_W}x${WIN_H} at ${WIN_X},${WIN_Y}]"
-            xdotool mousemove "$BTN_X" "$BTN_Y" click 1 2>/dev/null
+            # Continue Login ボタンは左寄り、ダイアログ下部
+            # ダイアログ幅の 35% 地点、高さの 75% 地点あたり
+            BTN_X=$((WIN_X + WIN_W * 35 / 100))
+            BTN_Y=$((WIN_Y + WIN_H * 75 / 100))
+            echo "[auto-reconnect] $(date -u) Click ($BTN_X, $BTN_Y) [win ${WIN_W}x${WIN_H} at ${WIN_X},${WIN_Y}]"
+            xdotool mousemove "$BTN_X" "$BTN_Y"
+            sleep 0.1
+            xdotool click 1
+        fi
+
+        sleep 3
+
+        # まだダイアログがあれば別の座標を試す
+        STILL=$(xdotool search --name "Existing session detected" 2>/dev/null | head -1)
+        if [ -n "$STILL" ]; then
+            echo "[auto-reconnect] $(date -u) Dialog persists, trying offset clicks"
+            # Y をずらしながら試す
+            for OFFSET in -10 0 10 20 30; do
+                NEW_Y=$((BTN_Y + OFFSET))
+                xdotool mousemove "$BTN_X" "$NEW_Y"
+                sleep 0.1
+                xdotool click 1
+                sleep 1
+                CHECK=$(xdotool search --name "Existing session detected" 2>/dev/null | head -1)
+                if [ -z "$CHECK" ]; then
+                    echo "[auto-reconnect] $(date -u) Dialog dismissed at offset $OFFSET"
+                    break
+                fi
+            done
         else
-            # フォールバック: Tab で Reconnect ボタンにフォーカスして Enter
-            echo "[auto-reconnect] $(date -u) Fallback: Tab+Enter"
-            xdotool key --window "$WIN_ID" Tab Return 2>/dev/null
+            echo "[auto-reconnect] $(date -u) Dialog dismissed successfully"
         fi
 
         sleep 5
-
-        # ダイアログがまだ残っていたらもう一度試す (別の方法)
-        STILL=$(xdotool search --name "Existing session detected" 2>/dev/null | head -1)
-        if [ -n "$STILL" ]; then
-            echo "[auto-reconnect] $(date -u) Dialog still open, trying Enter key"
-            xdotool windowactivate --sync "$STILL" 2>/dev/null
-            xdotool key --window "$STILL" Return 2>/dev/null
-            sleep 3
-        fi
     fi
 
     sleep 1
