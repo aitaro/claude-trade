@@ -1,10 +1,10 @@
 /** リスクチェックエンジン — 全注文は必ずここを通過する */
 
 import { eq } from "drizzle-orm";
-import { db } from "../db/client.js";
-import { riskState, type RiskState } from "../db/schema.js";
+import type { OrderRequest } from "../broker/types.js";
 import { loadEnv } from "../config.js";
-import type { OrderRequest } from "./portfolio-calc.js";
+import { db } from "../db/client.js";
+import { type RiskState, riskState } from "../db/schema.js";
 
 export interface RiskCheckResult {
   approved: boolean;
@@ -13,16 +13,10 @@ export interface RiskCheckResult {
 }
 
 export async function getRiskState(): Promise<RiskState> {
-  const [state] = await db
-    .select()
-    .from(riskState)
-    .where(eq(riskState.id, 1));
+  const [state] = await db.select().from(riskState).where(eq(riskState.id, 1));
 
   if (!state) {
-    const [created] = await db
-      .insert(riskState)
-      .values({ id: 1 })
-      .returning();
+    const [created] = await db.insert(riskState).values({ id: 1 }).returning();
     return created;
   }
   return state;
@@ -65,14 +59,11 @@ export async function checkOrder(
   }
   checks.daily_orders = dailyCount < env.MAX_DAILY_ORDERS;
   if (!checks.daily_orders) {
-    reasons.push(
-      `Daily order limit reached: ${dailyCount}/${env.MAX_DAILY_ORDERS}`,
-    );
+    reasons.push(`Daily order limit reached: ${dailyCount}/${env.MAX_DAILY_ORDERS}`);
   }
 
   // 5. Daily loss limit
-  checks.daily_loss =
-    (state.dailyLossPct ?? 0) < env.DAILY_LOSS_LIMIT_PCT;
+  checks.daily_loss = (state.dailyLossPct ?? 0) < env.DAILY_LOSS_LIMIT_PCT;
   if (!checks.daily_loss) {
     reasons.push(
       `Daily loss ${(state.dailyLossPct ?? 0).toFixed(2)}% exceeds limit ${env.DAILY_LOSS_LIMIT_PCT}%`,
@@ -86,8 +77,7 @@ export async function checkOrder(
 export async function incrementOrderCount(): Promise<void> {
   const state = await getRiskState();
   const today = new Date().toISOString().slice(0, 10);
-  const newCount =
-    state.lastResetDate === today ? (state.dailyOrderCount ?? 0) + 1 : 1;
+  const newCount = state.lastResetDate === today ? (state.dailyOrderCount ?? 0) + 1 : 1;
 
   await db
     .update(riskState)

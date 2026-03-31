@@ -1,6 +1,6 @@
-import { config } from "dotenv";
-import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
+import { fileURLToPath } from "url";
+import { config } from "dotenv";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -18,7 +18,13 @@ export function loadEnv() {
     POSTGRES_PORT: process.env.POSTGRES_PORT || "5432",
     POSTGRES_DB: process.env.POSTGRES_DB || "claude_trade",
 
-    // IB Gateway
+    // Broker
+    BROKER: process.env.BROKER || "alpaca",
+    ALPACA_API_KEY: process.env.ALPACA_API_KEY || "",
+    ALPACA_API_SECRET: process.env.ALPACA_API_SECRET || "",
+    ALPACA_PAPER: process.env.ALPACA_PAPER !== "false",
+
+    // IB Gateway (legacy)
     IB_HOST: process.env.IB_HOST || "127.0.0.1",
     IB_PORT: Number(process.env.IB_PORT || "4002"),
     IB_CLIENT_ID: Number(process.env.IB_CLIENT_ID || "1"),

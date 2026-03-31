@@ -1,8 +1,8 @@
 /** フィードバックループ: シグナル評価・学習ツール */
 
-import { eq, and, gt, or, isNull, desc } from "drizzle-orm";
+import { and, desc, eq, gt, isNull, or } from "drizzle-orm";
 import { db } from "../../db/client.js";
-import { signals, signalOutcomes, lessons } from "../../db/schema.js";
+import { lessons, signalOutcomes, signals } from "../../db/schema.js";
 
 export async function evaluateSignal(
   signalId: string,
@@ -11,19 +11,14 @@ export async function evaluateSignal(
   evaluation: string,
   pnl: number | null = null,
 ): Promise<Record<string, unknown>> {
-  const [signal] = await db
-    .select()
-    .from(signals)
-    .where(eq(signals.id, signalId));
+  const [signal] = await db.select().from(signals).where(eq(signals.id, signalId));
 
   if (!signal) {
     return { error: `Signal ${signalId} not found` };
   }
 
   const priceChangePct =
-    priceAtSignal > 0
-      ? ((priceAtEval - priceAtSignal) / priceAtSignal) * 100
-      : 0;
+    priceAtSignal > 0 ? ((priceAtEval - priceAtSignal) / priceAtSignal) * 100 : 0;
 
   let directionCorrect: boolean;
   if (signal.signalType === "buy") {
@@ -149,17 +144,10 @@ export async function getRelevantLessons(
   ];
 
   if (symbol) {
-    conditions.push(
-      or(eq(lessons.symbol, symbol.toUpperCase()), isNull(lessons.symbol)),
-    );
+    conditions.push(or(eq(lessons.symbol, symbol.toUpperCase()), isNull(lessons.symbol)));
   }
   if (sourceStrategy) {
-    conditions.push(
-      or(
-        eq(lessons.sourceStrategy, sourceStrategy),
-        isNull(lessons.sourceStrategy),
-      ),
-    );
+    conditions.push(or(eq(lessons.sourceStrategy, sourceStrategy), isNull(lessons.sourceStrategy)));
   }
   if (lessonType) {
     conditions.push(eq(lessons.lessonType, lessonType));
@@ -211,10 +199,7 @@ export async function getSignalAccuracy(
   const total = rows.length;
   const correct = rows.filter((o) => o.directionCorrect).length;
 
-  const byType: Record<
-    string,
-    { total: number; correct: number; accuracy: number }
-  > = {};
+  const byType: Record<string, { total: number; correct: number; accuracy: number }> = {};
   for (const o of rows) {
     const t = o.signalType;
     if (!byType[t]) byType[t] = { total: 0, correct: 0, accuracy: 0 };
@@ -223,15 +208,11 @@ export async function getSignalAccuracy(
   }
   for (const t of Object.keys(byType)) {
     byType[t].accuracy =
-      byType[t].total > 0
-        ? Math.round((byType[t].correct / byType[t].total) * 10000) / 10000
-        : 0;
+      byType[t].total > 0 ? Math.round((byType[t].correct / byType[t].total) * 10000) / 10000 : 0;
   }
 
-  const avgConfidence =
-    rows.reduce((sum, o) => sum + o.confidence, 0) / total;
-  const avgPriceChange =
-    rows.reduce((sum, o) => sum + Math.abs(o.priceChangePct ?? 0), 0) / total;
+  const avgConfidence = rows.reduce((sum, o) => sum + o.confidence, 0) / total;
+  const avgPriceChange = rows.reduce((sum, o) => sum + Math.abs(o.priceChangePct ?? 0), 0) / total;
 
   return {
     period_days: days,

@@ -1,16 +1,7 @@
 /** 目標ポートフォリオ計算 → 注文生成 */
 
+import type { OrderRequest } from "../broker/types.js";
 import type { Signal } from "../db/schema.js";
-
-export interface OrderRequest {
-  symbol: string;
-  side: "BUY" | "SELL";
-  quantity: number;
-  signalId: string;
-  reasoning: string;
-  exchange: string;
-  currency: string;
-}
 
 function calculateTargetShares(
   signal: Signal,
@@ -45,8 +36,6 @@ export function generateOrders(
   positions: Map<string, number>,
   prices: Map<string, number>,
   maxPositionPct: number,
-  exchange = "SMART",
-  currency = "USD",
 ): OrderRequest[] {
   const orders: OrderRequest[] = [];
 
@@ -56,13 +45,7 @@ export function generateOrders(
 
     if (currentPrice <= 0) continue;
 
-    const targetQty = calculateTargetShares(
-      signal,
-      nav,
-      currentQty,
-      currentPrice,
-      maxPositionPct,
-    );
+    const targetQty = calculateTargetShares(signal, nav, currentQty, currentPrice, maxPositionPct);
 
     const diff = targetQty - currentQty;
 
@@ -73,8 +56,6 @@ export function generateOrders(
         quantity: diff,
         signalId: signal.id,
         reasoning: `Signal: ${signal.signalType} strength=${signal.strength.toFixed(2)} conf=${(signal.confidence ?? 0.5).toFixed(2)}`,
-        exchange,
-        currency,
       });
     } else if (diff < 0) {
       orders.push({
@@ -83,8 +64,6 @@ export function generateOrders(
         quantity: Math.abs(diff),
         signalId: signal.id,
         reasoning: `Signal: ${signal.signalType} strength=${signal.strength.toFixed(2)} conf=${(signal.confidence ?? 0.5).toFixed(2)}`,
-        exchange,
-        currency,
       });
     }
   }

@@ -1,19 +1,19 @@
 /** IBKR 発注エグゼキューター — Paper Trading のみ */
 
 import {
-  IBApi,
+  type Contract,
   EventName,
-  Contract,
-  SecType,
-  Order as IBOrder,
-  OrderAction,
+  IBApi,
+  type Order as IBOrder,
+  type OrderAction,
   OrderType,
+  SecType,
 } from "@stoqey/ib";
 import type { TickType } from "@stoqey/ib";
-import { db } from "../db/client.js";
-import { orders, type Order } from "../db/schema.js";
+import type { OrderRequest } from "../broker/types.js";
 import { loadEnv } from "../config.js";
-import type { OrderRequest } from "./portfolio-calc.js";
+import { db } from "../db/client.js";
+import { type Order, orders } from "../db/schema.js";
 
 // TickType numeric values
 const TICK_BID = 1;
@@ -43,10 +43,7 @@ export class Executor {
     if (this.connected) return;
 
     return new Promise<void>((resolve, reject) => {
-      const timeout = setTimeout(
-        () => reject(new Error("IB connection timeout")),
-        10000,
-      );
+      const timeout = setTimeout(() => reject(new Error("IB connection timeout")), 10000);
 
       this.ib.once(EventName.connected, () => {
         clearTimeout(timeout);
@@ -71,15 +68,12 @@ export class Executor {
     }
   }
 
-  async executeOrder(
-    orderReq: OrderRequest,
-    decisionId: string,
-  ): Promise<Order> {
+  async executeOrder(orderReq: OrderRequest, decisionId: string): Promise<Order> {
     const contract: Contract = {
       symbol: orderReq.symbol,
       secType: SecType.STK,
-      exchange: orderReq.exchange,
-      currency: orderReq.currency,
+      exchange: "SMART",
+      currency: "USD",
     };
 
     const ibOrder: IBOrder = {
@@ -107,10 +101,7 @@ export class Executor {
         fillQty?: number;
         error?: string;
       }>((resolve) => {
-        const timeout = setTimeout(
-          () => resolve({ status: "submitted" }),
-          30000,
-        );
+        const timeout = setTimeout(() => resolve({ status: "submitted" }), 30000);
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (this.ib as any).on(
@@ -178,11 +169,7 @@ export class Executor {
     return new Promise<Map<string, number>>((resolve) => {
       const positions = new Map<string, number>();
 
-      const handler = (
-        _account: string,
-        contract: Contract,
-        pos: number,
-      ) => {
+      const handler = (_account: string, contract: Contract, pos: number) => {
         if (contract.symbol) {
           positions.set(contract.symbol, pos);
         }
@@ -223,12 +210,8 @@ export class Executor {
         currency: string,
       ) => {
         if (_reqId !== reqId) return;
-        if (
-          tag === "NetLiquidation" &&
-          currency !== "BASE" &&
-          currency !== ""
-        ) {
-          result = { nav: parseFloat(value), currency };
+        if (tag === "NetLiquidation" && currency !== "BASE" && currency !== "") {
+          result = { nav: Number.parseFloat(value), currency };
         }
       };
 
@@ -255,10 +238,7 @@ export class Executor {
     });
   }
 
-  async getFxRate(
-    fromCurrency: string,
-    toCurrency: string,
-  ): Promise<number> {
+  async getFxRate(fromCurrency: string, toCurrency: string): Promise<number> {
     if (fromCurrency === toCurrency) return 1.0;
 
     const rate = await this._fetchFxRate(fromCurrency, toCurrency);
@@ -271,10 +251,7 @@ export class Executor {
     return 0;
   }
 
-  private async _fetchFxRate(
-    symbol: string,
-    currency: string,
-  ): Promise<number> {
+  private async _fetchFxRate(symbol: string, currency: string): Promise<number> {
     const reqId = getNextReqId();
     const contract: Contract = {
       secType: "CASH" as SecType,
@@ -288,11 +265,7 @@ export class Executor {
       let ask = 0;
       let last = 0;
 
-      const handler = (
-        tickerId: number,
-        tickType: TickType,
-        value: number,
-      ) => {
+      const handler = (tickerId: number, tickType: TickType, value: number) => {
         if (tickerId !== reqId) return;
         if (isNaN(value) || value <= 0) return;
         const tt = tickType as unknown as number;
@@ -343,11 +316,7 @@ export class Executor {
       const price = await new Promise<number>((resolve) => {
         let p = 0;
 
-        const handler = (
-          tickerId: number,
-          tickType: TickType,
-          value: number,
-        ) => {
+        const handler = (tickerId: number, tickType: TickType, value: number) => {
           if (tickerId !== reqId) return;
           if (isNaN(value) || value <= 0) return;
           const tt = tickType as unknown as number;

@@ -1,6 +1,6 @@
 /** 成績分析ツール */
 
-import { eq, gte, lte, asc, and } from "drizzle-orm";
+import { and, asc, eq, gte, lte } from "drizzle-orm";
 import { db } from "../../db/client.js";
 import { dailyPerformance, orders } from "../../db/schema.js";
 
@@ -31,16 +31,12 @@ export async function queryPerformance(
 
   const pnlPcts = rows.map((d) => d.pnlPct);
   const avgDailyReturn =
-    pnlPcts.length > 0
-      ? pnlPcts.reduce((a, b) => a + b, 0) / pnlPcts.length
-      : 0;
+    pnlPcts.length > 0 ? pnlPcts.reduce((a, b) => a + b, 0) / pnlPcts.length : 0;
 
   let sharpe = 0;
   if (pnlPcts.length > 1) {
     const mean = avgDailyReturn;
-    const variance =
-      pnlPcts.reduce((sum, x) => sum + (x - mean) ** 2, 0) /
-      (pnlPcts.length - 1);
+    const variance = pnlPcts.reduce((sum, x) => sum + (x - mean) ** 2, 0) / (pnlPcts.length - 1);
     const stdDev = Math.sqrt(variance);
     sharpe = stdDev > 0 ? (mean / stdDev) * Math.sqrt(252) : 0;
   }

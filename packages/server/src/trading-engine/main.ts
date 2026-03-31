@@ -1,56 +1,25 @@
 /** Trading Engine メインエントリポイント */
 
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { parseArgs } from "node:util";
-import { parse as parseYaml } from "yaml";
-import { PROJECT_ROOT, loadEnv } from "../config.js";
+import { createBroker } from "../broker/index.js";
+import type { BrokerAdapter } from "../broker/index.js";
+import { loadEnv } from "../config.js";
 import { pool } from "../db/client.js";
 import { createLogger } from "../lib/logger.js";
 import { completeSession, recordDecision, startSession } from "./audit.js";
-import { Executor } from "./executor.js";
 import { checkDailyLoss } from "./kill-switch.js";
 import { getStartingNav } from "./nav.js";
 import { generateOrders } from "./portfolio-calc.js";
 import { checkOrder, getRiskState, incrementOrderCount } from "./risk-engine.js";
 import { getLatestSignalPerSymbol } from "./signal-reader.js";
 
-const STRATEGY_DIR = resolve(PROJECT_ROOT, "strategies");
-
-const MARKET_DEFAULTS: Record<
-  string,
-  { exchange: string; currency: string; strategyFile: string }
-> = {
-  us: { exchange: "SMART", currency: "USD", strategyFile: "us.yaml" },
-  jp: { exchange: "SMART", currency: "JPY", strategyFile: "jp.yaml" },
-  eu: { exchange: "SMART", currency: "EUR", strategyFile: "eu.yaml" },
-  uk: { exchange: "SMART", currency: "GBP", strategyFile: "uk.yaml" },
-};
-
-function loadMarketConfig(marketId: string): { exchange: string; currency: string } {
-  const defaults = MARKET_DEFAULTS[marketId] ?? MARKET_DEFAULTS.us;
-  const strategyPath = resolve(STRATEGY_DIR, defaults.strategyFile);
-  try {
-    const content = readFileSync(strategyPath, "utf-8");
-    const strategy = parseYaml(content);
-    return {
-      exchange: strategy?.exchange ?? defaults.exchange,
-      currency: strategy?.currency ?? defaults.currency,
-    };
-  } catch {
-    return defaults;
-  }
-}
-
-async function run(marketId: string, sharedExecutor?: Executor): Promise<void> {
+async function run(marketId: string, sharedBroker?: BrokerAdapter): Promise<void> {
   const env = loadEnv();
   const log = createLogger("trading", marketId.toUpperCase());
-  const mkt = loadMarketConfig(marketId);
-  const { exchange, currency } = mkt;
 
   const sessionLog = await startSession("trading");
   let ordersPlaced = 0;
-  const ownExecutor = !sharedExecutor;
+  const ownBroker = !sharedBroker;
 
   try {
     // 1. アクティブシグナルを読み取り
@@ -74,48 +43,43 @@ async function run(marketId: string, sharedExecutor?: Executor): Promise<void> {
       return;
     }
 
-    // 3. IBKR 接続
-    const executor = sharedExecutor ?? new Executor();
-    if (ownExecutor) {
+    // 3. ブローカー接続
+    const broker = sharedBroker ?? createBroker();
+    if (ownBroker) {
       try {
-        await executor.connect();
+        await broker.connect();
       } catch (e) {
-        log.error({ err: e }, "IB connection failed. Aborting.");
+        log.error({ err: e, broker: broker.name }, "Broker connection failed. Aborting.");
         await completeSession(sessionLog, {
           status: "failed",
-          summary: `IB connection failed: ${e}`,
+          summary: `Broker connection failed: ${e}`,
         });
         return;
       }
     }
 
     try {
-      const { nav: navRaw, currency: baseCurrency } = await executor.getNav();
-      const positions = await executor.getCurrentPositions();
-      const prices = await executor.getCurrentPrices([...signalMap.keys()], exchange, currency);
+      const account = await broker.getAccountSummary();
+      const nav = account.netLiquidation;
+      log.info({ currency: account.currency, nav }, "NAV");
 
-      // NAV を取引通貨に変換
-      let nav: number;
-      if (baseCurrency !== currency) {
-        const fxRate = await executor.getFxRate(baseCurrency, currency);
-        if (fxRate <= 0) {
-          log.error({ baseCurrency, currency }, "Failed to get FX rate. Aborting.");
-          await completeSession(sessionLog, {
-            status: "failed",
-            summary: `FX rate unavailable: ${baseCurrency}->${currency}`,
-          });
-          return;
-        }
-        nav = navRaw * fxRate;
-        log.info({ baseCurrency, navRaw, currency, nav, fxRate }, "NAV converted");
-      } else {
-        nav = navRaw;
-        log.info({ currency, nav }, "NAV");
+      // ポジション取得 → Map<symbol, quantity> に変換
+      const positionList = await broker.getPositions();
+      const positions = new Map<string, number>();
+      for (const p of positionList) {
+        positions.set(p.symbol, p.quantity);
       }
 
-      // 4. 日次損失チェック (DB から当日開始NAVを取得)
-      const startingNav = await getStartingNav(navRaw);
-      const killed = await checkDailyLoss(navRaw, startingNav);
+      // 価格取得 → Map<symbol, number> に変換
+      const quotes = await broker.getQuotes([...signalMap.keys()]);
+      const prices = new Map<string, number>();
+      for (const [sym, q] of quotes) {
+        prices.set(sym, q.last ?? q.bid ?? 0);
+      }
+
+      // 4. 日次損失チェック
+      const startingNav = await getStartingNav(nav);
+      const killed = await checkDailyLoss(nav, startingNav);
       if (killed) {
         log.warn("Kill switch triggered by daily loss. Aborting.");
         await completeSession(sessionLog, { status: "aborted", summary: "Daily loss kill switch" });
@@ -123,15 +87,7 @@ async function run(marketId: string, sharedExecutor?: Executor): Promise<void> {
       }
 
       // 5. 注文生成
-      const orderRequests = generateOrders(
-        signalMap,
-        nav,
-        positions,
-        prices,
-        env.MAX_POSITION_PCT,
-        exchange,
-        currency,
-      );
+      const orderRequests = generateOrders(signalMap, nav, positions, prices, env.MAX_POSITION_PCT);
 
       if (orderRequests.length === 0) {
         log.info("No orders to execute.");
@@ -161,7 +117,7 @@ async function run(marketId: string, sharedExecutor?: Executor): Promise<void> {
           continue;
         }
 
-        const dbOrder = await executor.executeOrder(orderReq, decision.id);
+        const result = await broker.placeOrder(orderReq);
         await incrementOrderCount();
         ordersPlaced++;
         log.info(
@@ -169,15 +125,18 @@ async function run(marketId: string, sharedExecutor?: Executor): Promise<void> {
             symbol: orderReq.symbol,
             side: orderReq.side,
             quantity: orderReq.quantity,
-            orderId: dbOrder.ibOrderId,
-            status: dbOrder.status,
+            brokerOrderId: result.brokerOrderId,
+            status: result.status,
+            fillPrice: result.fillPrice,
           },
           "Order PLACED",
         );
+
+        // TODO: DB に Order レコードを保存 (broker_order_id カラム追加後)
       }
     } finally {
-      if (ownExecutor) {
-        executor.disconnect();
+      if (ownBroker) {
+        broker.disconnect();
       }
     }
 
@@ -195,24 +154,24 @@ async function run(marketId: string, sharedExecutor?: Executor): Promise<void> {
 
 async function runMultiple(marketIds: string[]): Promise<void> {
   const log = createLogger("trading");
-  const executor = new Executor();
+  const broker = createBroker();
   try {
-    await executor.connect();
+    await broker.connect();
   } catch (e) {
-    log.error({ err: e }, "IB connection failed. Aborting all markets.");
+    log.error({ err: e }, "Broker connection failed. Aborting all markets.");
     return;
   }
 
   try {
     for (const marketId of marketIds) {
       try {
-        await run(marketId, executor);
+        await run(marketId, broker);
       } catch (e) {
         log.error({ err: e, market: marketId.toUpperCase() }, "Market trading error");
       }
     }
   } finally {
-    executor.disconnect();
+    broker.disconnect();
   }
 }
 

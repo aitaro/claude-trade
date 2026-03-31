@@ -1,6 +1,6 @@
 /** 判断履歴照会ツール */
 
-import { eq, desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { db } from "../../db/client.js";
 import { decisions, orders, sessionLogs } from "../../db/schema.js";
 
@@ -8,16 +8,10 @@ export async function getDecisionHistory(
   symbol: string | null = null,
   limit = 20,
 ): Promise<Record<string, unknown>> {
-  let query = db
-    .select()
-    .from(decisions)
-    .orderBy(desc(decisions.createdAt))
-    .limit(limit);
+  let query = db.select().from(decisions).orderBy(desc(decisions.createdAt)).limit(limit);
 
   if (symbol) {
-    query = query.where(
-      eq(decisions.symbol, symbol.toUpperCase()),
-    ) as typeof query;
+    query = query.where(eq(decisions.symbol, symbol.toUpperCase())) as typeof query;
   }
 
   const rows = await query;
@@ -42,16 +36,10 @@ export async function getOrderHistory(
   status: string | null = null,
   limit = 20,
 ): Promise<Record<string, unknown>> {
-  let query = db
-    .select()
-    .from(orders)
-    .orderBy(desc(orders.createdAt))
-    .limit(limit);
+  let query = db.select().from(orders).orderBy(desc(orders.createdAt)).limit(limit);
 
   if (symbol) {
-    query = query.where(
-      eq(orders.symbol, symbol.toUpperCase()),
-    ) as typeof query;
+    query = query.where(eq(orders.symbol, symbol.toUpperCase())) as typeof query;
   }
   if (status) {
     query = query.where(eq(orders.status, status)) as typeof query;
@@ -75,9 +63,7 @@ export async function getOrderHistory(
   };
 }
 
-export async function getSessionLogs(
-  limit = 10,
-): Promise<Record<string, unknown>> {
+export async function getSessionLogs(limit = 10): Promise<Record<string, unknown>> {
   const rows = await db
     .select()
     .from(sessionLogs)

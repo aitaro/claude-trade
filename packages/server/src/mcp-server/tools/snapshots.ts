@@ -1,92 +1,76 @@
 /** スナップショット取得・日次成績記録ツール */
 
-import { eq, and, gte, lte, desc, asc } from "drizzle-orm";
+import { and, asc, desc, eq, gte, lte } from "drizzle-orm";
+import { getBroker } from "../../broker/index.js";
 import { db } from "../../db/client.js";
-import {
-  accountSnapshots,
-  positionSnapshots,
-  dailyPerformance,
-  orders,
-} from "../../db/schema.js";
-import { ibClient } from "../ib-client.js";
+import { accountSnapshots, dailyPerformance, orders, positionSnapshots } from "../../db/schema.js";
 
-export async function captureAccountSnapshot(): Promise<
-  Record<string, unknown>
-> {
+export async function captureAccountSnapshot(): Promise<Record<string, unknown>> {
   try {
-    return await ibClient.withConnection(async () => {
-      const summary = await ibClient.getAccountSummary();
+    const broker = getBroker();
+    const summary = await broker.getAccountSummary();
 
-      const getValue = (tag: string): number => {
-        const item = summary.find((s) => s.tag === tag);
-        return item ? parseFloat(item.value) : 0;
-      };
+    const [snapshot] = await db
+      .insert(accountSnapshots)
+      .values({
+        netLiquidation: summary.netLiquidation,
+        totalCash: summary.totalCash,
+        buyingPower: summary.buyingPower,
+        grossPositionValue: 0,
+        unrealizedPnl: 0,
+        realizedPnl: 0,
+      })
+      .returning();
 
-      const [snapshot] = await db
-        .insert(accountSnapshots)
-        .values({
-          netLiquidation: getValue("NetLiquidation"),
-          totalCash: getValue("TotalCashValue"),
-          buyingPower: getValue("BuyingPower"),
-          grossPositionValue: getValue("GrossPositionValue"),
-          unrealizedPnl: getValue("UnrealizedPnL"),
-          realizedPnl: getValue("RealizedPnL"),
-        })
-        .returning();
-
-      return {
-        id: snapshot.id,
-        net_liquidation: snapshot.netLiquidation,
-        total_cash: snapshot.totalCash,
-        buying_power: snapshot.buyingPower,
-        gross_position_value: snapshot.grossPositionValue,
-        unrealized_pnl: snapshot.unrealizedPnl,
-        realized_pnl: snapshot.realizedPnl,
-        captured_at: snapshot.capturedAt?.toISOString(),
-      };
-    });
+    return {
+      id: snapshot.id,
+      net_liquidation: snapshot.netLiquidation,
+      total_cash: snapshot.totalCash,
+      buying_power: snapshot.buyingPower,
+      gross_position_value: snapshot.grossPositionValue,
+      unrealized_pnl: snapshot.unrealizedPnl,
+      realized_pnl: snapshot.realizedPnl,
+      captured_at: snapshot.capturedAt?.toISOString(),
+    };
   } catch (e) {
     return { error: String(e) };
   }
 }
 
-export async function capturePositionSnapshot(): Promise<
-  Record<string, unknown>
-> {
+export async function capturePositionSnapshot(): Promise<Record<string, unknown>> {
   try {
-    return await ibClient.withConnection(async () => {
-      const positions = await ibClient.getPositions();
+    const broker = getBroker();
+    const positions = await broker.getPositions();
 
-      if (positions.length === 0) {
-        return { positions: [], count: 0, message: "No open positions" };
-      }
+    if (positions.length === 0) {
+      return { positions: [], count: 0, message: "No open positions" };
+    }
 
-      const snapshots = [];
-      for (const p of positions) {
-        const [snapshot] = await db
-          .insert(positionSnapshots)
-          .values({
-            symbol: p.symbol,
-            quantity: p.quantity,
-            avgCost: p.avgCost,
-            marketPrice: p.marketPrice,
-            marketValue: p.marketValue,
-            unrealizedPnl: p.unrealizedPnl,
-            realizedPnl: p.realizedPnl,
-          })
-          .returning();
+    const snapshots = [];
+    for (const p of positions) {
+      const [snapshot] = await db
+        .insert(positionSnapshots)
+        .values({
+          symbol: p.symbol,
+          quantity: p.quantity,
+          avgCost: p.avgCost,
+          marketPrice: p.marketPrice,
+          marketValue: p.marketValue,
+          unrealizedPnl: p.unrealizedPnl,
+          realizedPnl: 0,
+        })
+        .returning();
 
-        snapshots.push({
-          symbol: snapshot.symbol,
-          quantity: snapshot.quantity,
-          avg_cost: snapshot.avgCost,
-          market_value: snapshot.marketValue,
-          unrealized_pnl: snapshot.unrealizedPnl,
-        });
-      }
+      snapshots.push({
+        symbol: snapshot.symbol,
+        quantity: snapshot.quantity,
+        avg_cost: snapshot.avgCost,
+        market_value: snapshot.marketValue,
+        unrealized_pnl: snapshot.unrealizedPnl,
+      });
+    }
 
-      return { positions: snapshots, count: snapshots.length };
-    });
+    return { positions: snapshots, count: snapshots.length };
   } catch (e) {
     return { error: String(e) };
   }
@@ -145,9 +129,7 @@ export async function recordDailyPerf(
   };
 }
 
-export async function getTodayStartingNav(): Promise<
-  Record<string, unknown>
-> {
+export async function getTodayStartingNav(): Promise<Record<string, unknown>> {
   const today = new Date().toISOString().slice(0, 10);
   const dayStart = new Date(`${today}T00:00:00`);
   const dayEnd = new Date(`${today}T23:59:59`);
@@ -157,10 +139,7 @@ export async function getTodayStartingNav(): Promise<
     .select()
     .from(accountSnapshots)
     .where(
-      and(
-        gte(accountSnapshots.capturedAt, dayStart),
-        lte(accountSnapshots.capturedAt, dayEnd),
-      ),
+      and(gte(accountSnapshots.capturedAt, dayStart), lte(accountSnapshots.capturedAt, dayEnd)),
     )
     .orderBy(asc(accountSnapshots.capturedAt))
     .limit(1);

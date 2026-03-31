@@ -1,6 +1,6 @@
 /** リサーチレポート保存ツール */
 
-import { eq, desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { db } from "../../db/client.js";
 import { researchReports } from "../../db/schema.js";
 
@@ -43,9 +43,7 @@ export async function getRecentReports(
     .limit(limit);
 
   if (reportType) {
-    query = query.where(
-      eq(researchReports.reportType, reportType),
-    ) as typeof query;
+    query = query.where(eq(researchReports.reportType, reportType)) as typeof query;
   }
 
   const rows = await query;

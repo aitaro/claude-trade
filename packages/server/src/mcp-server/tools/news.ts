@@ -1,8 +1,8 @@
 /** ニュース取得ツール */
 
+import { loadEnv } from "../../config.js";
 import { db } from "../../db/client.js";
 import { newsItems } from "../../db/schema.js";
-import { loadEnv } from "../../config.js";
 
 const env = loadEnv();
 
@@ -13,10 +13,7 @@ async function fetchFinnhub(path: string): Promise<unknown> {
   return res.json();
 }
 
-export async function getNews(
-  symbol: string,
-  days = 3,
-): Promise<Record<string, unknown>> {
+export async function getNews(symbol: string, days = 3): Promise<Record<string, unknown>> {
   if (!env.FINNHUB_API_KEY) {
     return { error: "FINNHUB_API_KEY not configured" };
   }
@@ -32,9 +29,7 @@ export async function getNews(
 
   const items: Record<string, unknown>[] = [];
   for (const n of news.slice(0, 20)) {
-    const publishedAt = n.datetime
-      ? new Date((n.datetime as number) * 1000)
-      : null;
+    const publishedAt = n.datetime ? new Date((n.datetime as number) * 1000) : null;
 
     await db.insert(newsItems).values({
       source: "finnhub",
@@ -56,15 +51,13 @@ export async function getNews(
   return { symbol, news: items, count: items.length };
 }
 
-export async function searchNews(
-  query: string,
-): Promise<Record<string, unknown>> {
+export async function searchNews(query: string): Promise<Record<string, unknown>> {
   const results: Record<string, unknown>[] = [];
 
   if (env.FINNHUB_API_KEY) {
-    const general = (await fetchFinnhub(
-      `/news?category=general&minId=0`,
-    )) as Array<Record<string, unknown>>;
+    const general = (await fetchFinnhub(`/news?category=general&minId=0`)) as Array<
+      Record<string, unknown>
+    >;
 
     for (const n of general.slice(0, 10)) {
       const headline = (n.headline as string) || "";
@@ -86,9 +79,7 @@ export async function searchNews(
   return { query, results, count: results.length };
 }
 
-export async function getEconomicCalendar(): Promise<
-  Record<string, unknown>
-> {
+export async function getEconomicCalendar(): Promise<Record<string, unknown>> {
   if (!env.FINNHUB_API_KEY) {
     return { error: "FINNHUB_API_KEY not configured" };
   }
@@ -98,14 +89,16 @@ export async function getEconomicCalendar(): Promise<
   const from = start.toISOString().slice(0, 10);
   const to = end.toISOString().slice(0, 10);
 
-  const calendar = (await fetchFinnhub(
-    `/calendar/economic?from=${from}&to=${to}`,
-  )) as Record<string, unknown>;
+  const calendar = (await fetchFinnhub(`/calendar/economic?from=${from}&to=${to}`)) as Record<
+    string,
+    unknown
+  >;
 
   const events: Record<string, unknown>[] = [];
-  for (const e of (
-    (calendar.economicCalendar as Array<Record<string, unknown>>) ?? []
-  ).slice(0, 30)) {
+  for (const e of ((calendar.economicCalendar as Array<Record<string, unknown>>) ?? []).slice(
+    0,
+    30,
+  )) {
     events.push({
       event: e.event,
       country: e.country,
