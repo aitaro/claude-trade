@@ -1,8 +1,8 @@
+import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
-import { eq, desc, and, gte, lte } from "drizzle-orm";
-import { router, publicProcedure } from "../trpc.js";
 import { db } from "../../db/client.js";
-import { orders, decisions } from "../../db/schema.js";
+import { decisions, orders } from "../../db/schema.js";
+import { publicProcedure, router } from "../trpc.js";
 
 export const ordersRouter = router({
   list: publicProcedure
@@ -16,8 +16,7 @@ export const ordersRouter = router({
     .query(async ({ input }) => {
       const conditions = [];
       if (input.status) conditions.push(eq(orders.status, input.status));
-      if (input.symbol)
-        conditions.push(eq(orders.symbol, input.symbol.toUpperCase()));
+      if (input.symbol) conditions.push(eq(orders.symbol, input.symbol.toUpperCase()));
 
       return db
         .select()
@@ -36,8 +35,7 @@ export const ordersRouter = router({
     )
     .query(async ({ input }) => {
       const conditions = [];
-      if (input.symbol)
-        conditions.push(eq(decisions.symbol, input.symbol.toUpperCase()));
+      if (input.symbol) conditions.push(eq(decisions.symbol, input.symbol.toUpperCase()));
 
       return db
         .select()

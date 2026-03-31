@@ -1,8 +1,8 @@
+import { and, desc, eq, gt } from "drizzle-orm";
 import { z } from "zod";
-import { eq, and, gt, desc, asc, lte, gte } from "drizzle-orm";
-import { router, publicProcedure } from "../trpc.js";
 import { db } from "../../db/client.js";
 import { signals } from "../../db/schema.js";
+import { publicProcedure, router } from "../trpc.js";
 
 export const signalsRouter = router({
   list: publicProcedure
@@ -31,23 +31,16 @@ export const signalsRouter = router({
         .limit(input.limit);
     }),
 
-  getById: publicProcedure
-    .input(z.object({ id: z.string() }))
-    .query(async ({ input }) => {
-      const [signal] = await db
-        .select()
-        .from(signals)
-        .where(eq(signals.id, input.id));
-      return signal ?? null;
-    }),
+  getById: publicProcedure.input(z.object({ id: z.string() })).query(async ({ input }) => {
+    const [signal] = await db.select().from(signals).where(eq(signals.id, input.id));
+    return signal ?? null;
+  }),
 
   stats: publicProcedure.query(async () => {
     const now = new Date();
     const all = await db.select().from(signals).orderBy(desc(signals.createdAt));
 
-    const active = all.filter(
-      (s) => s.isActive && s.expiresAt && s.expiresAt > now,
-    );
+    const active = all.filter((s) => s.isActive && s.expiresAt && s.expiresAt > now);
 
     const byType: Record<string, number> = {};
     for (const s of active) {

@@ -1,16 +1,7 @@
-import { useState } from "react";
-import { trpc } from "@/lib/trpc";
-import { formatDateTime } from "@/lib/format";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { TipBadge } from "@/components/tip-badge";
-import { SIGNAL_TYPE_LABELS } from "@/lib/labels";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -19,6 +10,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatDateTime } from "@/lib/format";
+import { SIGNAL_TYPE_LABELS } from "@/lib/labels";
+import { trpc } from "@/lib/trpc";
+import { useState } from "react";
 
 export function Signals() {
   const [activeOnly, setActiveOnly] = useState(true);
@@ -64,9 +59,7 @@ export function Signals() {
             <TableBody>
               {signals.data?.map((s) => (
                 <TableRow key={s.id}>
-                  <TableCell className="font-mono font-bold">
-                    {s.symbol}
-                  </TableCell>
+                  <TableCell className="font-mono font-bold">{s.symbol}</TableCell>
                   <TableCell>
                     <TipBadge
                       tip={SIGNAL_TYPE_LABELS[s.signalType]}
@@ -82,11 +75,7 @@ export function Signals() {
                     </TipBadge>
                   </TableCell>
                   <TableCell>
-                    <span
-                      className={
-                        s.strength > 0 ? "text-green-600" : "text-red-600"
-                      }
-                    >
+                    <span className={s.strength > 0 ? "text-green-600" : "text-red-600"}>
                       {s.strength?.toFixed(2)}
                     </span>
                   </TableCell>
@@ -98,23 +87,16 @@ export function Signals() {
                     {s.reasoning?.slice(0, 100)}
                   </TableCell>
                   <TableCell className="text-xs">
-                    {s.expiresAt
-                      ? formatDateTime(s.expiresAt)
-                      : ""}
+                    {s.expiresAt ? formatDateTime(s.expiresAt) : ""}
                   </TableCell>
                   <TableCell className="text-xs">
-                    {s.createdAt
-                      ? formatDateTime(s.createdAt)
-                      : ""}
+                    {s.createdAt ? formatDateTime(s.createdAt) : ""}
                   </TableCell>
                 </TableRow>
               ))}
               {signals.data?.length === 0 && (
                 <TableRow>
-                  <TableCell
-                    colSpan={8}
-                    className="text-center text-muted-foreground"
-                  >
+                  <TableCell colSpan={8} className="text-center text-muted-foreground">
                     No signals found
                   </TableCell>
                 </TableRow>

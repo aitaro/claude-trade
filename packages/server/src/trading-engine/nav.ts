@@ -1,6 +1,6 @@
 /** 当日開始 NAV を DB から取得する */
 
-import { gte, lte, asc, desc } from "drizzle-orm";
+import { asc, desc, gte, lte } from "drizzle-orm";
 import { and } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { accountSnapshots, dailyPerformance } from "../db/schema.js";
@@ -15,10 +15,7 @@ export async function getStartingNav(fallback: number): Promise<number> {
     .select()
     .from(accountSnapshots)
     .where(
-      and(
-        gte(accountSnapshots.capturedAt, dayStart),
-        lte(accountSnapshots.capturedAt, dayEnd),
-      ),
+      and(gte(accountSnapshots.capturedAt, dayStart), lte(accountSnapshots.capturedAt, dayEnd)),
     )
     .orderBy(asc(accountSnapshots.capturedAt))
     .limit(1);

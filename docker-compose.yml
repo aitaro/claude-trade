@@ -15,29 +15,6 @@ services:
       timeout: 5s
       retries: 5
 
-  ib-gateway:
-    build:
-      context: ./deploy
-      dockerfile: Dockerfile.ib-gateway
-    image: claude-trade/ib-gateway:latest
-    entrypoint: ["/bin/sh", "/opt/ib-entrypoint.sh"]
-    volumes:
-      - ./scripts/ib-gateway-entrypoint.sh:/opt/ib-entrypoint.sh:ro
-      - ./scripts/auto-reconnect.sh:/opt/auto-reconnect.sh:ro
-      - ibjts:/home/ibgateway/Jts
-    environment:
-      TWS_USERID: ${TWS_USERID:-}
-      TWS_PASSWORD: ${TWS_PASSWORD:-}
-      TRADING_MODE: paper
-      TWS_ACCEPT_INCOMING: "true"
-      TWOFA_TIMEOUT_ACTION: restart
-      READ_ONLY_API: "no"
-      EXISTING_SESSION_DETECTED_ACTION: manual
-      IB_RESTART_DELAY: "180"
-      VNC_SERVER_PASSWORD: ${VNC_SERVER_PASSWORD:-}
-    network_mode: host
-    restart: unless-stopped
-
   pgweb:
     image: sosedoff/pgweb
     environment:
@@ -51,4 +28,3 @@ services:
 
 volumes:
   pgdata:
-  ibjts:

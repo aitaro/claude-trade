@@ -1,8 +1,8 @@
 /** 注文・判断の監査記録 */
 
-import { db } from "../db/client.js";
-import { decisions, sessionLogs, type Decision, type SessionLog } from "../db/schema.js";
 import { eq } from "drizzle-orm";
+import { db } from "../db/client.js";
+import { type Decision, type SessionLog, decisions, sessionLogs } from "../db/schema.js";
 
 export async function recordDecision(
   signalId: string | null,
@@ -29,9 +29,7 @@ export async function recordDecision(
   return decision;
 }
 
-export async function startSession(
-  sessionType: string,
-): Promise<SessionLog> {
+export async function startSession(sessionType: string): Promise<SessionLog> {
   const [log] = await db
     .insert(sessionLogs)
     .values({

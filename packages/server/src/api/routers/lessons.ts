@@ -1,8 +1,8 @@
+import { and, desc, eq, gt, isNull, or } from "drizzle-orm";
 import { z } from "zod";
-import { eq, and, gt, or, isNull, desc } from "drizzle-orm";
-import { router, publicProcedure } from "../trpc.js";
 import { db } from "../../db/client.js";
 import { lessons, signalOutcomes } from "../../db/schema.js";
+import { publicProcedure, router } from "../trpc.js";
 
 export const lessonsRouter = router({
   list: publicProcedure
@@ -17,9 +17,7 @@ export const lessonsRouter = router({
       const conditions = [];
       if (input.activeOnly) {
         conditions.push(eq(lessons.isActive, true));
-        conditions.push(
-          or(isNull(lessons.expiresAt), gt(lessons.expiresAt, new Date())),
-        );
+        conditions.push(or(isNull(lessons.expiresAt), gt(lessons.expiresAt, new Date())));
       }
       if (input.lessonType) {
         conditions.push(eq(lessons.lessonType, input.lessonType));
@@ -59,9 +57,10 @@ export const lessonsRouter = router({
         if (o.directionCorrect) byType[t].correct++;
       }
       for (const t of Object.keys(byType)) {
-        byType[t].accuracy = byType[t].total > 0
-          ? Math.round((byType[t].correct / byType[t].total) * 10000) / 10000
-          : 0;
+        byType[t].accuracy =
+          byType[t].total > 0
+            ? Math.round((byType[t].correct / byType[t].total) * 10000) / 10000
+            : 0;
       }
 
       return {

@@ -1,6 +1,6 @@
-import { router, publicProcedure } from "../trpc.js";
-import { MARKETS, type MarketConfig } from "../../agent/markets.js";
 import { isMarketOpen, isTradingDay } from "../../agent/market.js";
+import { MARKETS, type MarketConfig } from "../../agent/markets.js";
+import { publicProcedure, router } from "../trpc.js";
 
 function hhmm(h: number, m: number): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
@@ -54,7 +54,8 @@ function buildScheduleJobs(mkt: MarketConfig): ScheduleJob[] {
     localTime: hhmm(mkt.premarketHour, mkt.premarketMinute),
     localTzAbbr: abbr,
     timezone: mkt.timezone,
-    nextRunUtc: getNextRun(mkt.premarketHour, mkt.premarketMinute, mkt.timezone)?.toISOString() ?? null,
+    nextRunUtc:
+      getNextRun(mkt.premarketHour, mkt.premarketMinute, mkt.timezone)?.toISOString() ?? null,
   });
 
   // Intraday (every 10 min during market hours)

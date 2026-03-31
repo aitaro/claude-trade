@@ -1,42 +1,34 @@
-/** スケジューラ用: IB からスナップショットを取得して DB に保存 */
+/** スケジューラ用: ブローカーからスナップショットを取得して DB に保存 */
 
 import { db } from "../db/client.js";
 import { accountSnapshots, positionSnapshots } from "../db/schema.js";
 import { createLogger } from "../lib/logger.js";
-import { IBClient } from "../mcp-server/ib-client.js";
+import { createBroker } from "../broker/index.js";
 
 const log = createLogger("snapshot");
 
 export async function captureSnapshots(): Promise<void> {
-  const ib = new IBClient();
+  const broker = createBroker();
 
   try {
-    await ib.connect();
+    await broker.connect();
 
-    // Account snapshot
-    const summary = await ib.getAccountSummary();
-    const getValue = (tag: string): number => {
-      const item = summary.find((s) => s.tag === tag);
-      return item ? Number.parseFloat(item.value) : 0;
-    };
-
-    const netLiquidation = getValue("NetLiquidation");
-    if (netLiquidation <= 0) {
+    const summary = await broker.getAccountSummary();
+    if (summary.netLiquidation <= 0) {
       log.warn("Account summary returned 0 NAV, skipping snapshot");
       return;
     }
 
     await db.insert(accountSnapshots).values({
-      netLiquidation,
-      totalCash: getValue("TotalCashValue"),
-      buyingPower: getValue("BuyingPower"),
-      grossPositionValue: getValue("GrossPositionValue"),
-      unrealizedPnl: getValue("UnrealizedPnL"),
-      realizedPnl: getValue("RealizedPnL"),
+      netLiquidation: summary.netLiquidation,
+      totalCash: summary.totalCash,
+      buyingPower: summary.buyingPower,
+      grossPositionValue: 0,
+      unrealizedPnl: 0,
+      realizedPnl: 0,
     });
 
-    // Position snapshots
-    const positions = await ib.getPositions();
+    const positions = await broker.getPositions();
     for (const p of positions) {
       await db.insert(positionSnapshots).values({
         symbol: p.symbol,
@@ -45,7 +37,7 @@ export async function captureSnapshots(): Promise<void> {
         marketPrice: p.marketPrice,
         marketValue: p.marketValue,
         unrealizedPnl: p.unrealizedPnl,
-        realizedPnl: p.realizedPnl,
+        realizedPnl: 0,
       });
     }
 
@@ -53,6 +45,6 @@ export async function captureSnapshots(): Promise<void> {
   } catch (e) {
     log.error({ err: e }, "Snapshot capture failed");
   } finally {
-    ib.disconnect();
+    broker.disconnect();
   }
 }

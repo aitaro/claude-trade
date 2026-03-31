@@ -1,15 +1,14 @@
 import {
-  pgTable,
-  uuid,
-  varchar,
-  doublePrecision,
   boolean,
-  timestamp,
+  doublePrecision,
+  index,
   integer,
   jsonb,
-  index,
+  pgTable,
+  timestamp,
+  uuid,
+  varchar,
 } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
 
 // ── Stage 1 → Stage 2 bridge ──
 

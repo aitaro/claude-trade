@@ -1,8 +1,8 @@
+import { desc, eq } from "drizzle-orm";
 import { z } from "zod";
-import { eq, desc } from "drizzle-orm";
-import { router, publicProcedure } from "../trpc.js";
 import { db } from "../../db/client.js";
 import { researchReports } from "../../db/schema.js";
+import { publicProcedure, router } from "../trpc.js";
 
 export const researchRouter = router({
   list: publicProcedure
@@ -28,21 +28,17 @@ export const researchRouter = router({
         .limit(input.limit);
 
       if (input.reportType) {
-        query = query.where(
-          eq(researchReports.reportType, input.reportType),
-        ) as typeof query;
+        query = query.where(eq(researchReports.reportType, input.reportType)) as typeof query;
       }
 
       return query;
     }),
 
-  getById: publicProcedure
-    .input(z.object({ id: z.string() }))
-    .query(async ({ input }) => {
-      const [report] = await db
-        .select()
-        .from(researchReports)
-        .where(eq(researchReports.id, input.id));
-      return report ?? null;
-    }),
+  getById: publicProcedure.input(z.object({ id: z.string() })).query(async ({ input }) => {
+    const [report] = await db
+      .select()
+      .from(researchReports)
+      .where(eq(researchReports.id, input.id));
+    return report ?? null;
+  }),
 });

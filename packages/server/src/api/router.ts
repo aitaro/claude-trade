@@ -1,11 +1,11 @@
-import { router } from "./trpc.js";
-import { signalsRouter } from "./routers/signals.js";
-import { ordersRouter } from "./routers/orders.js";
-import { researchRouter } from "./routers/research.js";
-import { performanceRouter } from "./routers/performance.js";
 import { lessonsRouter } from "./routers/lessons.js";
-import { sessionsRouter } from "./routers/sessions.js";
 import { marketsRouter } from "./routers/markets.js";
+import { ordersRouter } from "./routers/orders.js";
+import { performanceRouter } from "./routers/performance.js";
+import { researchRouter } from "./routers/research.js";
+import { sessionsRouter } from "./routers/sessions.js";
+import { signalsRouter } from "./routers/signals.js";
+import { router } from "./trpc.js";
 
 export const appRouter = router({
   signals: signalsRouter,

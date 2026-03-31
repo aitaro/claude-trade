@@ -1,12 +1,8 @@
+import { and, asc, desc, gte, lte } from "drizzle-orm";
 import { z } from "zod";
-import { desc, asc, gte, lte, and } from "drizzle-orm";
-import { router, publicProcedure } from "../trpc.js";
 import { db } from "../../db/client.js";
-import {
-  dailyPerformance,
-  accountSnapshots,
-  positionSnapshots,
-} from "../../db/schema.js";
+import { accountSnapshots, dailyPerformance, positionSnapshots } from "../../db/schema.js";
+import { publicProcedure, router } from "../trpc.js";
 
 export const performanceRouter = router({
   daily: publicProcedure
@@ -19,10 +15,8 @@ export const performanceRouter = router({
     )
     .query(async ({ input }) => {
       const conditions = [];
-      if (input.startDate)
-        conditions.push(gte(dailyPerformance.date, input.startDate));
-      if (input.endDate)
-        conditions.push(lte(dailyPerformance.date, input.endDate));
+      if (input.startDate) conditions.push(gte(dailyPerformance.date, input.startDate));
+      if (input.endDate) conditions.push(lte(dailyPerformance.date, input.endDate));
 
       return db
         .select()
@@ -33,10 +27,7 @@ export const performanceRouter = router({
     }),
 
   summary: publicProcedure.query(async () => {
-    const rows = await db
-      .select()
-      .from(dailyPerformance)
-      .orderBy(asc(dailyPerformance.date));
+    const rows = await db.select().from(dailyPerformance).orderBy(asc(dailyPerformance.date));
 
     if (rows.length === 0) {
       return {
@@ -53,19 +44,13 @@ export const performanceRouter = router({
     const totalTrades = rows.reduce((s, d) => s + (d.tradesCount ?? 0), 0);
     const totalWinners = rows.reduce((s, d) => s + (d.winners ?? 0), 0);
     const pnlPcts = rows.map((d) => d.pnlPct);
-    const avgDailyReturn =
-      pnlPcts.reduce((a, b) => a + b, 0) / pnlPcts.length;
-    const maxDrawdown = Math.max(
-      ...rows.map((d) => d.maxDrawdownPct ?? 0),
-    );
+    const avgDailyReturn = pnlPcts.reduce((a, b) => a + b, 0) / pnlPcts.length;
+    const maxDrawdown = Math.max(...rows.map((d) => d.maxDrawdownPct ?? 0));
 
     return {
       totalPnl: Math.round(totalPnl * 100) / 100,
       totalTrades,
-      winRate:
-        totalTrades > 0
-          ? Math.round((totalWinners / totalTrades) * 10000) / 10000
-          : 0,
+      winRate: totalTrades > 0 ? Math.round((totalWinners / totalTrades) * 10000) / 10000 : 0,
       tradingDays: rows.length,
       avgDailyReturn: Math.round(avgDailyReturn * 10000) / 10000,
       maxDrawdown: Math.round(maxDrawdown * 10000) / 10000,

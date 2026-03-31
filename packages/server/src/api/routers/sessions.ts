@@ -1,8 +1,8 @@
-import { z } from "zod";
 import { desc } from "drizzle-orm";
-import { router, publicProcedure } from "../trpc.js";
+import { z } from "zod";
 import { db } from "../../db/client.js";
 import { sessionLogs } from "../../db/schema.js";
+import { publicProcedure, router } from "../trpc.js";
 
 export const sessionsRouter = router({
   list: publicProcedure
@@ -12,10 +12,6 @@ export const sessionsRouter = router({
       }),
     )
     .query(async ({ input }) => {
-      return db
-        .select()
-        .from(sessionLogs)
-        .orderBy(desc(sessionLogs.startedAt))
-        .limit(input.limit);
+      return db.select().from(sessionLogs).orderBy(desc(sessionLogs.startedAt)).limit(input.limit);
     }),
 });

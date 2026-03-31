@@ -28,16 +28,8 @@
     "vitepress-plugin-mermaid": "^2.0.17"
   },
   "pnpm": {
-    "onlyBuiltDependencies": [
-      "@biomejs/biome",
-      "esbuild",
-      "msw",
-      "tldjs"
-    ],
-    "ignoredBuiltDependencies": [
-      "msw",
-      "tldjs"
-    ]
+    "onlyBuiltDependencies": ["@biomejs/biome", "esbuild", "msw", "tldjs"],
+    "ignoredBuiltDependencies": ["msw", "tldjs"]
   },
   "dependencies": {
     "date-fns": "^4.1.0",

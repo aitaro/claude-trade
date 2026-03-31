@@ -32,7 +32,12 @@ export function isMarketOpen(marketId = "us"): boolean {
   }
 
   // Lunch break check (TSE etc.)
-  if (mkt.breakStartHour != null && mkt.breakStartMinute != null && mkt.breakEndHour != null && mkt.breakEndMinute != null) {
+  if (
+    mkt.breakStartHour != null &&
+    mkt.breakStartMinute != null &&
+    mkt.breakEndHour != null &&
+    mkt.breakEndMinute != null
+  ) {
     const breakStart = mkt.breakStartHour * 60 + mkt.breakStartMinute;
     const breakEnd = mkt.breakEndHour * 60 + mkt.breakEndMinute;
     if (currentMinutes >= breakStart && currentMinutes <= breakEnd) {

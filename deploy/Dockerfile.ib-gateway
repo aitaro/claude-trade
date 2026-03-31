@@ -1,5 +1,0 @@
-FROM ghcr.io/gnzsnz/ib-gateway:stable
-
-USER root
-RUN apt-get update && apt-get install -y --no-install-recommends xdotool && rm -rf /var/lib/apt/lists/*
-USER ibgateway

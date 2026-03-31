@@ -1,9 +1,5 @@
 import { Badge, type BadgeProps } from "@/components/ui/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface TipBadgeProps extends BadgeProps {
   tip?: string;

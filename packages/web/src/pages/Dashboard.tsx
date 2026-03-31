@@ -1,19 +1,9 @@
-import { trpc } from "@/lib/trpc";
-import { formatDateTime, formatTimeJST } from "@/lib/format";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { TipBadge } from "@/components/tip-badge";
-import {
-  SIGNAL_TYPE_LABELS,
-  SESSION_MODE_LABELS,
-  SESSION_STATUS_LABELS,
-} from "@/lib/labels";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatDateTime, formatTimeJST } from "@/lib/format";
+import { SESSION_MODE_LABELS, SESSION_STATUS_LABELS, SIGNAL_TYPE_LABELS } from "@/lib/labels";
+import { trpc } from "@/lib/trpc";
 
 export function Dashboard() {
   const snapshot = trpc.performance.latestSnapshot.useQuery();
@@ -38,9 +28,7 @@ export function Dashboard() {
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>NAV</CardDescription>
-            <CardTitle className="text-2xl">
-              {nav ? `¥${nav.toLocaleString()}` : "—"}
-            </CardTitle>
+            <CardTitle className="text-2xl">{nav ? `¥${nav.toLocaleString()}` : "—"}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-xs text-muted-foreground">
@@ -57,9 +45,7 @@ export function Dashboard() {
             <CardTitle
               className={`text-2xl ${(perfSummary.data?.totalPnl ?? 0) >= 0 ? "text-green-600" : "text-red-600"}`}
             >
-              {perfSummary.data
-                ? `¥${perfSummary.data.totalPnl.toLocaleString()}`
-                : "—"}
+              {perfSummary.data ? `¥${perfSummary.data.totalPnl.toLocaleString()}` : "—"}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -72,9 +58,7 @@ export function Dashboard() {
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Active Signals</CardDescription>
-            <CardTitle className="text-2xl">
-              {signalStats.data?.active ?? 0}
-            </CardTitle>
+            <CardTitle className="text-2xl">{signalStats.data?.active ?? 0}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex gap-1">
@@ -92,9 +76,7 @@ export function Dashboard() {
           <CardHeader className="pb-2">
             <CardDescription>Win Rate</CardDescription>
             <CardTitle className="text-2xl">
-              {perfSummary.data
-                ? `${(perfSummary.data.winRate * 100).toFixed(1)}%`
-                : "—"}
+              {perfSummary.data ? `${(perfSummary.data.winRate * 100).toFixed(1)}%` : "—"}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -135,9 +117,7 @@ export function Dashboard() {
                 )}
                 <p className="mt-1 text-xs">
                   Local: <span className="font-mono font-bold">{m.localTime}</span>
-                  {!m.isTradingDay && (
-                    <span className="ml-1 text-red-500">Holiday</span>
-                  )}
+                  {!m.isTradingDay && <span className="ml-1 text-red-500">Holiday</span>}
                 </p>
               </div>
             ))}
@@ -202,16 +182,11 @@ export function Dashboard() {
           </CardHeader>
           <CardContent>
             {recentSignals.data?.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                No active signals
-              </p>
+              <p className="text-sm text-muted-foreground">No active signals</p>
             )}
             <div className="space-y-2">
               {recentSignals.data?.map((s) => (
-                <div
-                  key={s.id}
-                  className="flex items-center justify-between rounded-md border p-2"
-                >
+                <div key={s.id} className="flex items-center justify-between rounded-md border p-2">
                   <div className="flex items-center gap-2">
                     <span className="font-mono font-bold">{s.symbol}</span>
                     <TipBadge
@@ -245,12 +220,11 @@ export function Dashboard() {
           <CardContent>
             <div className="space-y-2">
               {sessions.data?.map((s) => (
-                <div
-                  key={s.id}
-                  className="flex items-center justify-between rounded-md border p-2"
-                >
+                <div key={s.id} className="flex items-center justify-between rounded-md border p-2">
                   <div className="flex items-center gap-2">
-                    <TipBadge tip={SESSION_MODE_LABELS[s.sessionType]} variant="outline">{s.sessionType}</TipBadge>
+                    <TipBadge tip={SESSION_MODE_LABELS[s.sessionType]} variant="outline">
+                      {s.sessionType}
+                    </TipBadge>
                     <TipBadge
                       tip={SESSION_STATUS_LABELS[s.status ?? ""]}
                       variant={
@@ -265,9 +239,7 @@ export function Dashboard() {
                     </TipBadge>
                   </div>
                   <span className="text-xs text-muted-foreground">
-                    {s.startedAt
-                      ? formatDateTime(s.startedAt)
-                      : ""}
+                    {s.startedAt ? formatDateTime(s.startedAt) : ""}
                   </span>
                 </div>
               ))}

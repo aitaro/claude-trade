@@ -1,11 +1,4 @@
-import { trpc } from "@/lib/trpc";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -14,6 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { trpc } from "@/lib/trpc";
 
 export function Performance() {
   const summary = trpc.performance.summary.useQuery();
@@ -59,9 +53,7 @@ export function Performance() {
         <Card>
           <CardHeader>
             <CardTitle>Current Positions</CardTitle>
-            <CardDescription>
-              Latest snapshot
-            </CardDescription>
+            <CardDescription>Latest snapshot</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <Table>
@@ -78,21 +70,13 @@ export function Performance() {
               <TableBody>
                 {snapshot.data.positions.map((p) => (
                   <TableRow key={p.id}>
-                    <TableCell className="font-mono font-bold">
-                      {p.symbol}
-                    </TableCell>
+                    <TableCell className="font-mono font-bold">{p.symbol}</TableCell>
                     <TableCell>{p.quantity}</TableCell>
                     <TableCell>{p.avgCost?.toFixed(2)}</TableCell>
                     <TableCell>{p.marketPrice?.toFixed(2)}</TableCell>
-                    <TableCell>
-                      ¥{p.marketValue?.toLocaleString()}
-                    </TableCell>
+                    <TableCell>¥{p.marketValue?.toLocaleString()}</TableCell>
                     <TableCell
-                      className={
-                        (p.unrealizedPnl ?? 0) >= 0
-                          ? "text-green-600"
-                          : "text-red-600"
-                      }
+                      className={(p.unrealizedPnl ?? 0) >= 0 ? "text-green-600" : "text-red-600"}
                     >
                       ¥{p.unrealizedPnl?.toLocaleString()}
                     </TableCell>
@@ -127,18 +111,10 @@ export function Performance() {
                   <TableCell className="font-mono">{d.date}</TableCell>
                   <TableCell>¥{d.startingNav?.toLocaleString()}</TableCell>
                   <TableCell>¥{d.endingNav?.toLocaleString()}</TableCell>
-                  <TableCell
-                    className={
-                      d.pnl >= 0 ? "text-green-600" : "text-red-600"
-                    }
-                  >
+                  <TableCell className={d.pnl >= 0 ? "text-green-600" : "text-red-600"}>
                     ¥{d.pnl?.toLocaleString()}
                   </TableCell>
-                  <TableCell
-                    className={
-                      d.pnlPct >= 0 ? "text-green-600" : "text-red-600"
-                    }
-                  >
+                  <TableCell className={d.pnlPct >= 0 ? "text-green-600" : "text-red-600"}>
                     {d.pnlPct?.toFixed(2)}%
                   </TableCell>
                   <TableCell>{d.tradesCount}</TableCell>
@@ -146,10 +122,7 @@ export function Performance() {
               ))}
               {daily.data?.length === 0 && (
                 <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="text-center text-muted-foreground"
-                  >
+                  <TableCell colSpan={6} className="text-center text-muted-foreground">
                     No performance data yet
                   </TableCell>
                 </TableRow>

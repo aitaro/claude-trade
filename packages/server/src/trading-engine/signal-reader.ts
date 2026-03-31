@@ -1,12 +1,10 @@
 /** DB からアクティブなシグナルを読み取る */
 
-import { eq, and, gt, desc } from "drizzle-orm";
+import { and, desc, eq, gt } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { signals, type Signal } from "../db/schema.js";
+import { type Signal, signals } from "../db/schema.js";
 
-export async function readActiveSignals(
-  sourceStrategy: string | null = null,
-): Promise<Signal[]> {
+export async function readActiveSignals(sourceStrategy: string | null = null): Promise<Signal[]> {
   const now = new Date();
   const conditions = [eq(signals.isActive, true), gt(signals.expiresAt, now)];
   if (sourceStrategy) {

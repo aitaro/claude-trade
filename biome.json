@@ -30,12 +30,6 @@
     }
   },
   "files": {
-    "ignore": [
-      "node_modules",
-      "dist",
-      "drizzle",
-      "*.min.js",
-      "packages/web/src/components/ui"
-    ]
+    "ignore": ["node_modules", "dist", "drizzle", "*.min.js", "packages/web/src/components/ui"]
   }
 }

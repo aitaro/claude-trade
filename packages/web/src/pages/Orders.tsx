@@ -1,19 +1,5 @@
-import { trpc } from "@/lib/trpc";
-import { formatDateTime } from "@/lib/format";
 import { TipBadge } from "@/components/tip-badge";
-import {
-  ORDER_STATUS_LABELS,
-  ORDER_SIDE_LABELS,
-  DECISION_ACTION_LABELS,
-} from "@/lib/labels";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -22,6 +8,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { formatDateTime } from "@/lib/format";
+import { DECISION_ACTION_LABELS, ORDER_SIDE_LABELS, ORDER_STATUS_LABELS } from "@/lib/labels";
+import { trpc } from "@/lib/trpc";
 
 export function Orders() {
   const orderList = trpc.orders.list.useQuery({ limit: 50 });
@@ -56,15 +46,11 @@ export function Orders() {
                 <TableBody>
                   {orderList.data?.map((o) => (
                     <TableRow key={o.id}>
-                      <TableCell className="font-mono font-bold">
-                        {o.symbol}
-                      </TableCell>
+                      <TableCell className="font-mono font-bold">{o.symbol}</TableCell>
                       <TableCell>
                         <TipBadge
                           tip={ORDER_SIDE_LABELS[o.side]}
-                          variant={
-                            o.side === "BUY" ? "default" : "destructive"
-                          }
+                          variant={o.side === "BUY" ? "default" : "destructive"}
                         >
                           {o.side}
                         </TipBadge>
@@ -85,16 +71,10 @@ export function Orders() {
                           {o.status}
                         </TipBadge>
                       </TableCell>
-                      <TableCell>
-                        {o.fillPrice?.toFixed(2) ?? "—"}
-                      </TableCell>
-                      <TableCell className="font-mono text-xs">
-                        {o.ibOrderId ?? "—"}
-                      </TableCell>
+                      <TableCell>{o.fillPrice?.toFixed(2) ?? "—"}</TableCell>
+                      <TableCell className="font-mono text-xs">{o.ibOrderId ?? "—"}</TableCell>
                       <TableCell className="text-xs">
-                        {o.createdAt
-                          ? formatDateTime(o.createdAt)
-                          : ""}
+                        {o.createdAt ? formatDateTime(o.createdAt) : ""}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -122,16 +102,20 @@ export function Orders() {
                 <TableBody>
                   {decisionList.data?.map((d) => (
                     <TableRow key={d.id}>
-                      <TableCell className="font-mono font-bold">
-                        {d.symbol}
-                      </TableCell>
+                      <TableCell className="font-mono font-bold">{d.symbol}</TableCell>
                       <TableCell>
-                        <TipBadge tip={DECISION_ACTION_LABELS[d.action]} variant="outline">{d.action}</TipBadge>
+                        <TipBadge tip={DECISION_ACTION_LABELS[d.action]} variant="outline">
+                          {d.action}
+                        </TipBadge>
                       </TableCell>
                       <TableCell>{d.targetQuantity}</TableCell>
                       <TableCell>
                         <TipBadge
-                          tip={d.approved ? "リスクチェック全項目パス。発注実行" : "リスクチェック不合格。発注拒否"}
+                          tip={
+                            d.approved
+                              ? "リスクチェック全項目パス。発注実行"
+                              : "リスクチェック不合格。発注拒否"
+                          }
                           variant={d.approved ? "default" : "destructive"}
                         >
                           {d.approved ? "Yes" : "No"}
@@ -155,9 +139,7 @@ export function Orders() {
                         {(d.reasoning ?? "").slice(0, 80)}
                       </TableCell>
                       <TableCell className="text-xs">
-                        {d.createdAt
-                          ? formatDateTime(d.createdAt)
-                          : ""}
+                        {d.createdAt ? formatDateTime(d.createdAt) : ""}
                       </TableCell>
                     </TableRow>
                   ))}

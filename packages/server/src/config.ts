@@ -24,11 +24,6 @@ export function loadEnv() {
     ALPACA_API_SECRET: process.env.ALPACA_API_SECRET || "",
     ALPACA_PAPER: process.env.ALPACA_PAPER !== "false",
 
-    // IB Gateway (legacy)
-    IB_HOST: process.env.IB_HOST || "127.0.0.1",
-    IB_PORT: Number(process.env.IB_PORT || "4002"),
-    IB_CLIENT_ID: Number(process.env.IB_CLIENT_ID || "1"),
-
     // Finnhub
     FINNHUB_API_KEY: process.env.FINNHUB_API_KEY || "",
 

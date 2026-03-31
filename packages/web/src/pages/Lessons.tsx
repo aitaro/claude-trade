@@ -1,14 +1,8 @@
-import { trpc } from "@/lib/trpc";
 import { TipBadge } from "@/components/tip-badge";
-import { LESSON_TYPE_LABELS, LESSON_CATEGORY_LABELS } from "@/lib/labels";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { LESSON_CATEGORY_LABELS, LESSON_TYPE_LABELS } from "@/lib/labels";
+import { trpc } from "@/lib/trpc";
 
 const categoryColors: Record<string, string> = {
   positive: "text-green-600 bg-green-50 border-green-200",
@@ -28,26 +22,20 @@ export function Lessons() {
       <Card>
         <CardHeader>
           <CardTitle>Signal Accuracy (30 days)</CardTitle>
-          <CardDescription>
-            {accuracy.data?.total ?? 0} signals evaluated
-          </CardDescription>
+          <CardDescription>{accuracy.data?.total ?? 0} signals evaluated</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex gap-6">
             <div>
               <p className="text-3xl font-bold">
-                {accuracy.data?.total
-                  ? `${(accuracy.data.accuracy * 100).toFixed(1)}%`
-                  : "—"}
+                {accuracy.data?.total ? `${(accuracy.data.accuracy * 100).toFixed(1)}%` : "—"}
               </p>
               <p className="text-sm text-muted-foreground">Overall</p>
             </div>
             {accuracy.data?.byType &&
               Object.entries(accuracy.data.byType).map(([type, data]) => (
                 <div key={type}>
-                  <p className="text-xl font-bold">
-                    {(data.accuracy * 100).toFixed(1)}%
-                  </p>
+                  <p className="text-xl font-bold">{(data.accuracy * 100).toFixed(1)}%</p>
                   <p className="text-sm text-muted-foreground">
                     {type} ({data.correct}/{data.total})
                   </p>
@@ -60,15 +48,14 @@ export function Lessons() {
       {/* Lessons */}
       <div className="space-y-3">
         {lessonList.data?.map((l) => (
-          <Card
-            key={l.id}
-            className={`border ${categoryColors[l.category] ?? ""}`}
-          >
+          <Card key={l.id} className={`border ${categoryColors[l.category] ?? ""}`}>
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="mb-1 flex items-center gap-2">
-                    <TipBadge tip={LESSON_TYPE_LABELS[l.lessonType]} variant="outline">{l.lessonType}</TipBadge>
+                    <TipBadge tip={LESSON_TYPE_LABELS[l.lessonType]} variant="outline">
+                      {l.lessonType}
+                    </TipBadge>
                     <TipBadge
                       tip={LESSON_CATEGORY_LABELS[l.category]}
                       variant={
@@ -98,9 +85,7 @@ export function Lessons() {
           </Card>
         ))}
         {lessonList.data?.length === 0 && (
-          <p className="text-center text-muted-foreground">
-            No lessons recorded yet
-          </p>
+          <p className="text-center text-muted-foreground">No lessons recorded yet</p>
         )}
       </div>
     </div>
